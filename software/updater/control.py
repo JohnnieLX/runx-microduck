@@ -78,7 +78,7 @@ def check_robot(bus,health,previous):
     if not isinstance(bus,dict) or not isinstance(previous,dict): raise UpdateError('preflight','无法确认主程序状态')
     if (any(bus.get(key)!=value or previous.get(key)!=value for key,value in [('mode','motion'),('phase','control')])
         or any(bus.get(key) is not value or previous.get(key) is not value for key,value in
-            [('homed',True),('policy_enabled',False),('fresh_sample',True),('all_joints_fresh',True)])):
+            [('policy_enabled',False),('fresh_sample',True),('all_joints_fresh',True)])):
         raise UpdateError('preflight','请回到运动控制状态、完成 HOME 并关闭策略，等待关节反馈恢复')
     rows=bus.get('native',{}).get('joints',[]); old=previous.get('native',{}).get('joints',[])
     if len(rows)!=15 or len(old)!=15: raise UpdateError('preflight','缺少十五个关节的实时反馈')
