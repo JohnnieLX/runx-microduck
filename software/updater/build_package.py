@@ -82,6 +82,19 @@ def build(repo, ref, version, output, signing_key, public_key, minisign='minisig
     output=Path(output); output.mkdir(parents=True,exist_ok=True)
     artifact=output/f'{version}.tar.zst'; files={}; tar_buffer=io.BytesIO()
     with tarfile.open(fileobj=tar_buffer,mode='w') as dest:
+        emitted=set()
+        def add(info,payload=None):
+            # Emit parent directory entries (0755) before each file: the engine
+            # otherwise creates missing dirs under UMask 0077 -> 0700, breaking
+            # the radxa-owned studio CHDIR after apply.
+            parts=info.name.split('/')
+            for i in range(1,len(parts)):
+                directory='/'.join(parts[:i])
+                if directory not in emitted:
+                    emitted.add(directory)
+                    dinfo=tarfile.TarInfo(directory);dinfo.type=tarfile.DIRTYPE;dinfo.mode=0o755;dinfo.size=0
+                    dest.addfile(dinfo)
+            dest.addfile(info,payload)
         with tarfile.open(fileobj=io.BytesIO(frozen)) as source:
             for item in source:
                 name=runtime_path(item.name)
@@ -93,19 +106,19 @@ def build(repo, ref, version, output, signing_key, public_key, minisign='minisig
                 data=source.extractfile(item).read(); files[name]=hashlib.sha256(data).hexdigest()
                 if name in NATIVE_MEMBERS: raise ValueError('native payload must only come from the explicit publisher input')
                 info=tarfile.TarInfo(name); info.size=len(data); info.mode=0o755 if name.endswith('microduck-helper') else 0o644
-                dest.addfile(info,io.BytesIO(data))
+                add(info,io.BytesIO(data))
         if native_files:
             if any(name not in files for name in ('studio/deploy/microduck-helper','studio/deploy/native_update.py')):
                 raise ValueError('frozen source does not contain the native updater')
             for name,data in native_files.items():
                 files[name]=hashlib.sha256(data).hexdigest()
                 info=tarfile.TarInfo(name);info.size=len(data);info.mode=0o755 if name.rsplit('/',1)[-1] in ('robotd','padd') else 0o644
-                dest.addfile(info,io.BytesIO(data))
+                add(info,io.BytesIO(data))
         metadata={'version':version,'source_revision':revision,'files':files}
         if contracts:metadata['contracts']=contracts
         provenance=json.dumps(metadata,sort_keys=True,indent=2).encode()
         info=tarfile.TarInfo('suite-version.json'); info.size=len(provenance); info.mode=0o644
-        dest.addfile(info,io.BytesIO(provenance))
+        add(info,io.BytesIO(provenance))
     with artifact.open('wb') as stream:
         if shutil.which(zstd):
             subprocess.run([zstd,'-q','-T1','-10','-c'],input=tar_buffer.getvalue(),stdout=stream,check=True)
