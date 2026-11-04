@@ -5,7 +5,7 @@
 > **润象科技维护分支 · [mrunx.com](https://mrunx.com)**
 >
 > 本仓库 fork 自 [fanhao375/microduck-replica](https://github.com/fanhao375/microduck-replica)，默认分支 `our-fork` 维护润象的自主迭代补丁，改动清单见 [CHANGELOG.md](CHANGELOG.md)。
-> 许可证边界与上游保持一致、不做更改：代码 [Apache-2.0](LICENSE)，3D 模型与文档 [CC BY-NC-SA 4.0](LICENSE)，详见 [NOTICE.md](NOTICE.md)。
+> 许可证边界：代码 [Apache-2.0](LICENSE)，本项目原创文档 [CC BY 4.0](LICENSE)，上游 3D 模型与影像 [CC BY-NC-SA 4.0](LICENSE)，详见 [NOTICE.md](NOTICE.md)。
 > 本仓库与上游项目均与 Pollen Robotics 无隶属关系，未获其背书。
 
 基于 [Pollen Robotics Microduck](https://pollen-robotics.com/microduck/) 的第三方整机复刻项目，提供从采购、打印、装配到标定、控制和训练的资料。
@@ -259,7 +259,7 @@
 
 ## 许可与来源
 
-代码、仿真素材和镜像内模型分别适用各自许可，详见[许可与署名](NOTICE.md)及[模型使用条款](software/image/overlay/usr/share/doc/microduck/模型说明.txt)。**复刻镜像仅供个人非商业复刻，不得随收费产品分发。**
+代码采用 Apache-2.0，本项目原创文档采用 CC BY 4.0（可商用、可改写，只需署名），上游 3D 模型与影像采用 CC BY-NC-SA 4.0（禁商用）。详见[许可与署名](NOTICE.md)及[模型使用条款](software/image/overlay/usr/share/doc/microduck/模型说明.txt)。**复刻镜像内的模型与影像不得随收费产品分发。**
 
 本项目与 Pollen Robotics 无隶属关系，未获其背书。
 

@@ -11,7 +11,7 @@
 |---|---|---|
 | `software/studio/`、`software/updater/`、`software/image/`、`software/duck-echo/` 的代码 | Apache-2.0 | 是 |
 | `scripts/`、`tools/` 的原创脚本 | Apache-2.0 | 是 |
-| `*.md` 文档 | CC BY-NC-SA 4.0 | 可以改，但需接受同许可 |
+| `*.md` 文档 | CC BY 4.0 | 可以改，保留署名即可 |
 | `software/studio/web/model/`、`tools/servo-web/model/` 的 3D 网格 | CC BY-NC-SA 4.0 | 只改代码不改模型 |
 | 上游 MJCF / STL 派生的新渲染图或模型 | CC BY-NC-SA 4.0 | 需在 NOTICE.md 补署名 |
 

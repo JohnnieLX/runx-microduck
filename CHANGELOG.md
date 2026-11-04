@@ -8,6 +8,12 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **文档许可放宽**：本项目原创文档由 CC BY-NC-SA 4.0 改为 **CC BY 4.0**，
+  允许商业使用、改写与再分发，只需署名。上游模型及其派生几何不受影响，
+  仍为 CC BY-NC-SA 4.0。LICENSE 相应从“双许可”改为按内容类型分三条声明（本次提交）。
+
 ### Added
 
 - **Studio 电源控制**：`software/studio/microduck-helper` 新增 root 级 `power` 动词，

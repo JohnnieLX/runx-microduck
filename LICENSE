@@ -1,5 +1,5 @@
-本仓库采用双许可证 / This repository is dual-licensed
-=====================================================
+本仓库按内容类型分别许可 / This repository is licensed by content type
+====================================================================
 
 1. Apache License 2.0 —— 本项目原创的代码与工具
    Apache License 2.0 — original code and tooling by this project
@@ -16,9 +16,9 @@
    Apache-2.0 全文 / full text: https://www.apache.org/licenses/LICENSE-2.0
 
 
-2. CC BY-NC-SA 4.0 —— 上游 3D 模型的衍生作品，以及本项目的文档
-   CC BY-NC-SA 4.0 — derivative works of the upstream 3D models, and this
-   project's documentation
+2. CC BY-NC-SA 4.0 —— 上游 3D 模型的衍生作品与实物影像
+   CC BY-NC-SA 4.0 — derivative works of the upstream 3D models, and
+   physical build imagery
 
      assembly-drawings/    渲染图与爆炸图（由上游 MJCF + STL 生成）
                            renders and exploded views, generated from upstream MJCF + STL
@@ -34,32 +34,49 @@
      docs/hole_analysis.json
                            由上游 STL 计算得出的孔位数据
                            hole geometry computed from upstream STLs
-     *.md, docs/*.md       全部文档与逆向分析文本
-                           all documentation and reverse-engineering text
      build-log/, assets/   实物照片与图片素材，由本项目参与者拍摄并授权
                            build photos and image assets, shot by and licensed
                            from project participants
 
-   这些内容中，几何部分是 Pollen Robotics 的 Microduck 3D 模型（CC BY-NC-SA）
-   的衍生作品，依据 ShareAlike 条款必须沿用相同许可证；文档部分由本项目主动
-   采用同一许可证，以保持整体一致。
+   这些内容是 Pollen Robotics 的 Microduck 3D 模型（CC BY-NC-SA）的衍生作品，
+   依据 ShareAlike 条款必须沿用相同许可证。
 
-   The geometry here is derivative of Pollen Robotics' Microduck 3D models
-   (CC BY-NC-SA) and must carry the same licence under ShareAlike. The
-   documentation adopts the same licence by choice, for consistency.
+   These are derivative of Pollen Robotics' Microduck 3D models (CC BY-NC-SA)
+   and must carry the same licence under ShareAlike.
 
    CC BY-NC-SA 4.0 全文 / full text:
    https://creativecommons.org/licenses/by-nc-sa/4.0/
 
 
+3. CC BY 4.0 —— 本项目原创的文档与文字
+   CC BY 4.0 — original documentation and prose by this project
+
+     *.md, docs/*.md       全部项目文档、逆向分析文字与说明
+                           all project documentation, reverse-engineering
+                           prose and explanations
+
+   文档文字由本项目撰写，采用最宽松的署名许可：允许复制、修改、再分发和
+   商业使用，只需保留署名。文档中引用的上游图片、渲染图与几何数据不在本条
+   覆盖范围内，仍分别适用第 1 条或第 2 条。
+
+   Documentation prose is written by this project and licensed under the most
+   permissive attribution terms: copying, modification, redistribution and
+   commercial use are all allowed, attribution required. Upstream images,
+   renders and geometry quoted inside the documentation are excluded and
+   remain under clause 1 or clause 2 respectively.
+
+   CC BY 4.0 全文 / full text:
+   https://creativecommons.org/licenses/by/4.0/
+
+
 说明 / Notes
 ------------
 
-- assets/hw/ 中的两张官方板卡图片保留原许可，不受上述 CC BY-NC-SA 覆盖：
+- assets/hw/ 中的两张官方板卡图片保留原许可，不受本项目的 CC 许可覆盖：
   radxa-zero3w-official.webp 为 Radxa 的 CC BY 4.0 图片；
   rpi-robot-hat-official.png 为 Pollen Robotics 的 Apache-2.0 图片。
   These two official board images keep their original licences rather than
-  this project's CC BY-NC-SA. Sources and attribution:
+  this project's CC terms. Sources and attribution:
   assets/hw/official-board-images.md; HAT licence: assets/hw/RPI-Robot-HAT-LICENSE.txt.
 
 - software/training/ 保留训练工程自己的许可证边界：代码、配置、参数、上游文档与
@@ -90,9 +107,13 @@
   Source excerpts quoted in the documentation come from pollen-robotics/microduck
   under Apache-2.0, with file paths cited at each quotation.
 
-- 非商业性使用：CC BY-NC-SA 禁止商业用途。本仓库仅供学习、研究与个人复刻。
-  Non-commercial: CC BY-NC-SA forbids commercial use. This repository is for
-  study, research and personal replication only.
+- 非商业性边界只落在第 2 条的模型与影像上：这些内容受 CC BY-NC-SA 约束，禁止
+  商业用途。第 1 条的代码与第 3 条的文档允许商业使用。复刻镜像里的动作模型另有
+  作者限制，见上一条。
+  The non-commercial boundary applies only to models and imagery under clause 2,
+  which are CC BY-NC-SA and forbid commercial use. Code under clause 1 and
+  documentation under clause 3 may be used commercially. Motion models inside
+  the replica image carry their own author restriction, as noted above.
 
 完整署名与合规声明详见 NOTICE.md
 Full attribution and compliance statement: see NOTICE.md
