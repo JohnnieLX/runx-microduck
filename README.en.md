@@ -7,10 +7,11 @@
 > This repository is a fork of [fanhao375/microduck-replica](https://github.com/fanhao375/microduck-replica). The `our-fork` branch carries Runx's own iteration patches; see [CHANGELOG.md](CHANGELOG.md).
 > Licensing: code is [Apache-2.0](LICENSE), original documentation is [CC BY 4.0](LICENSE), upstream 3D models and imagery are [CC BY-NC-SA 4.0](LICENSE). See [NOTICE.md](NOTICE.md).
 > Neither this repository nor the upstream project is affiliated with or endorsed by Pollen Robotics.
+> This README is adapted from the upstream documentation (CC BY 4.0): tutorials, BOM and bench records are kept, while the upstream author's personal channels (WeChat group, tip QR codes, per-release blurbs) are removed. Images and software packages are still published on the upstream releases page.
 
 A third-party full-robot replica project based on [Pollen Robotics' Microduck](https://pollen-robotics.com/microduck/), with resources for sourcing parts, printing, assembly, calibration, control, and training.
 
-**The Feetech HD-1910 build has passed real hardware validation: standing, walking, a forward roll and standing back up.** Our main build uses **15 Feetech HD-1910 servos**. We provide a **ready-to-flash system image** and the **Microduck Studio web console** for Wi-Fi setup, calibration, and remote control from a phone or computer browser.
+**The Feetech HD-1910 build has passed real hardware validation: standing, walking, a forward roll and standing back up.** The main build uses **15 Feetech HD-1910 servos**. This repository ships a **ready-to-flash system image** and the **Microduck Studio web console** for Wi-Fi setup, calibration, and remote control from a phone or computer browser.
 
 **The first-use workflow has also been completed on real hardware:** flash the image → hotspot and Wi-Fi setup → servo and IMU calibration → gamepad pairing and e-stop test → stand and walk. [Real hardware validation records](docs/update-history.en.md#latest)
 
@@ -35,7 +36,7 @@ A third-party full-robot replica project based on [Pollen Robotics' Microduck](h
 
 The GIFs are silent previews; the MP4 files include the complete video and audio.
 
-**[Download the image](https://github.com/fanhao375/microduck-replica/releases/latest)** · **[First-use guide (PDF / web)](docs/上手指南/README.md)** · **[CAD and print files](https://github.com/fanhao375/microduck-replica-cad)** · **[Assembly tutorials](#-assembly-videos)** · **[BOM shopping list](BOM/README.md)** · **[Hardware projects](hardware/README.md)**
+**[Image and packages · upstream releases](https://github.com/fanhao375/microduck-replica/releases/latest)** · **[First-use guide (PDF / web)](docs/上手指南/README.md)** · **[CAD and print files](https://github.com/fanhao375/microduck-replica-cad)** · **[Assembly tutorials](#-assembly-videos)** · **[BOM shopping list](BOM/README.md)** · **[Hardware projects](hardware/README.md)**
 
 ---
 
@@ -48,18 +49,11 @@ The GIFs are silent previews; the MP4 files include the complete video and audio
 
 ---
 
-## Community
+## Feedback and upstream
 
-A WeChat group for people working on the same thing — build progress, pitfalls, sourcing.
+This repository is Runx Technology's maintenance fork: file issues, patches and hardware reports in [this repository's issue tracker](https://github.com/JohnnieLX/runx-microduck/issues).
 
-The code below is for **Duck Replica Group 13** (WeChat disables QR joins once a group reaches 200 members).
-
-<div align="center">
-  <img src="assets/wechat-group-13.png" alt="Duck Replica Group 13 WeChat QR code" width="280">
-  <br>
-  <sub><b>Duck Replica Group 13 · QR code valid before 2026-11-04</b> — WeChat group codes are valid for 7 days<br>
-  If it has expired, open an <a href="https://github.com/fanhao375/microduck-replica/issues">issue</a> and I will post a fresh one</sub>
-</div>
+The upstream WeChat group, discussions and per-release notes are maintained by the author at [fanhao375/microduck-replica](https://github.com/fanhao375/microduck-replica); go there for community chat.
 
 ---
 
@@ -116,7 +110,7 @@ The robot runtime, gait models and bus-ID-200 IMU autodetection are unchanged fr
 
 <p align="center"><a href="software/studio/README.md"><img src="assets/studio-overview-20261025-demo.jpg" alt="Current Microduck Studio interface with simulated device readings" width="920"></a><br><sub>Studio interface demonstration with simulated device readings</sub></p>
 
-**[Download the image](https://github.com/fanhao375/microduck-replica/releases/latest)** · **[First-use guide](docs/上手指南/README.md)** · **[Studio documentation](software/studio/README.md)**
+**[Image and packages · upstream releases](https://github.com/fanhao375/microduck-replica/releases/latest)** · **[First-use guide](docs/上手指南/README.md)** · **[Studio documentation](software/studio/README.md)**
 
 The image is free for personal non-commercial builds; see the release for component licences. Camera input defaults to a test source; see the release notes for physical camera and ToF verification limits.
 
@@ -179,11 +173,11 @@ The first three images are custom-board design previews; the Radxa and HAT image
 
 ## 🖥️ Open-source training workbench · Microduck Training Studio
 
-We also built **Microduck Training Studio**: create training experiments on a computer, view curves, pause and resume, evaluate checkpoints and export ONNX models through a browser. It runs separately from Studio on the duck.
+This repository also carries **Microduck Training Studio** (built by the upstream author): create training experiments on a computer, view curves, pause and resume, evaluate checkpoints and export ONNX models through a browser. It runs separately from Studio on the duck.
 
 <p align="center"><a href="software/training-studio/README.md"><img src="assets/training-studio-20261025-demo.jpg" alt="Actual Microduck Training Studio interface showing a 3D model, training controls and synthetic demo metrics" width="920"></a><br><sub>Training workbench in demo mode: the 3D view is a model preview and the curves use synthetic data</sub></p>
 
-The real-GPU short-run, evaluation-video and model-export pipeline has been verified. Long training and physical validation of our own trained policies remain pending.
+The real-GPU short-run, evaluation-video and model-export pipeline has been verified. Long training and physical validation of locally trained policies remain pending.
 
 **[Training workbench and usage](software/training-studio/README.md)** · **[Action Lab guide](software/training-studio/web/custom-actions.md)** · **[Training engine](software/training/README.md)** · [Verification record](software/training-studio/docs/verification.md)
 
@@ -204,13 +198,13 @@ The [tool index](tools/README.en.md) groups utilities by the task you want to pe
 
 ## 🦆 Contributions from the flock
 
-This repo is not one person's work. Merged code and bench-verified findings are credited here.
+Contributions below were merged upstream at [fanhao375/microduck-replica](https://github.com/fanhao375/microduck-replica) and carried over with the fork; author credits and PR links point to the upstream history.
 
 | Who | What they contributed |
 |---|---|
 | [@yoyojacky](https://github.com/yoyojacky) | **A Rust test tool for Feetech servos** ([PR #27](https://github.com/fanhao375/microduck-replica/pull/27), merged). A minimal STS/SCS protocol implementation of his own (framing, checksum, ping, register read/write, status parsing). The CLI scans the bus with a progress bar, reads status, moves a servo to a position, and runs single or batch tests that report position error, peak current, peak load, voltage and temperature, with a PASS/FAIL verdict — one command gives you a bench acceptance table → [`tools/sts3215Servo_testtool/`](tools/sts3215Servo_testtool/) |
 | [@Abo1ish](https://github.com/Abo1ish) | **IMU board firmware + attitude view in the debug console** ([PR #32](https://github.com/fanhao375/microduck-replica/pull/32), merged). A base STM32G031 firmware for the imu_to_dxl board that Pollen never open-sourced, verified on real hardware, with host-side tests and a [`VALIDATION.md`](hardware/imu_to_dxl/firmware/VALIDATION.md) that is clear about its limits → [`hardware/imu_to_dxl/firmware/`](hardware/imu_to_dxl/firmware/). He also streams the IMU attitude over J-Link into the web debug console, so the 3D duck's body turns with the real board (`--imu-jlink`, or `--imu-demo` with no hardware) → [`tools/servo-web/`](tools/servo-web/) |
-| A member of the WeChat group | **Boot recipe for the Radxa Zero 3W V1.12J.** On this batch (WiFi changed to AIC8800DS2), swapping in Radxa's bootloader is not enough. He found by testing that the device tree has to come from Radxa too: **B1 bootloader + B1 DTB + Armbian 6.1.115 kernel + Trixie userland**, and got it booting → written up in the [pitfalls log](踩坑记录.md#软件) and the [image guide](tools/radxa/镜像使用说明.md) (both Chinese) |
+| A community member | **Boot recipe for the Radxa Zero 3W V1.12J.** On this batch (WiFi changed to AIC8800DS2), swapping in Radxa's bootloader is not enough. He found by testing that the device tree has to come from Radxa too: **B1 bootloader + B1 DTB + Armbian 6.1.115 kernel + Trixie userland**, and got it booting → written up in the [pitfalls log](踩坑记录.md#软件) and the [image guide](tools/radxa/镜像使用说明.md) (both Chinese) |
 
 ---
 
@@ -221,12 +215,12 @@ Some people build duck-related things in their own repos. The good ones get a sh
 | Project | Author | What it does |
 |---|---|---|
 | [microduck-color-studio](https://github.com/LathamZ/microduck-color-studio) ([live demo](https://lathamz.github.io/microduck-color-studio/)) | [@LathamZ](https://github.com/LathamZ) | **A 3D color studio for the duck: settle the colors in your browser before you print.** Color each of the 70 parts, pick a material (PLA / matte / PETG / metallic / carbon fiber / TPU) and lighting to preview. Enter the filaments you already own and it recommends palettes from your stock (use what you have / add one color / acrylic accents). You can also import your own 3MF (e.g. the Feetech version) and export a **colored multi-plate 3MF** plus per-part STLs, with presets for Bambu P1S / A1 mini / H2D. Chinese and English UI, works on mobile |
-| [MICDUCK_FTHD1901_REBUILD](https://github.com/fengj4780-sudo/MICDUCK_FTHD1901_REBUILD) | [@fengj4780-sudo](https://github.com/fengj4780-sudo) | **Feetech-build structural rework with optional CNC reinforcement.** Builds on our [editable SolidWorks drawings](https://github.com/fanhao375/microduck-replica-cad): adapted to the Feetech servo (written as HD1901 in that repo; the part files are HD-1910-C001), weak parts reinforced, assembly interferences fixed and some broken models repaired. **Five leg parts can be made as CNC parts** for better load paths (still being prototyped; the author estimates about ¥45 for all five including shipping); printing them instead also works and is stronger than the original. Includes a one-click 3MF (Bambu H2D, 0.4 mm, 5 plates) and the reworked SolidWorks drawings (Chinese) |
+| [MICDUCK_FTHD1901_REBUILD](https://github.com/fengj4780-sudo/MICDUCK_FTHD1901_REBUILD) | [@fengj4780-sudo](https://github.com/fengj4780-sudo) | **Feetech-build structural rework with optional CNC reinforcement.** Builds on the upstream [editable SolidWorks drawings](https://github.com/fanhao375/microduck-replica-cad): adapted to the Feetech servo (written as HD1901 in that repo; the part files are HD-1910-C001), weak parts reinforced, assembly interferences fixed and some broken models repaired. **Five leg parts can be made as CNC parts** for better load paths (still being prototyped; the author estimates about ¥45 for all five including shipping); printing them instead also works and is stronger than the original. Includes a one-click 3MF (Bambu H2D, 0.4 mm, 5 plates) and the reworked SolidWorks drawings (Chinese) |
 | [Microduck-kissqy](https://github.com/kissqy/Microduck-kissqy) | [@kissqy](https://github.com/kissqy) | **A reference for Feetech HD1910 training workflows and robot control.** Includes a training console, environment setup and job management guides, ONNX model export, a robot control console, firmware and demo videos. Recommended in the algorithms section for the practical training workflow |
 
-Built something for the duck (a tool, tutorial, mod, policy…)? Open an issue with the link and we'll add it.
+Built something for the duck (a tool, tutorial, mod, policy…)? Open an issue in this repository with the link and it gets listed.
 
-Want to join in: open an [issue](https://github.com/fanhao375/microduck-replica/issues) or send a PR.
+Want to join in: open an [issue](https://github.com/JohnnieLX/runx-microduck/issues) or send a PR here; changes that belong to the upstream project should go to the [upstream repository](https://github.com/fanhao375/microduck-replica).
 Hardware, firmware, algorithms, documentation, measured data — all of it counts. **Measured data especially**: the rule in this repo is that results get recorded honestly, positive or negative.
 
 ---
@@ -253,8 +247,4 @@ Code, simulation assets and bundled models have separate licences. See [licensin
 
 This third-party project is not affiliated with or endorsed by Pollen Robotics.
 
-### ❤️ Support the author
-
-This project has grown through hands-on assembly, debugging, software development and documentation. If the resources and tools have helped you, a Star ⭐, bug report or build story is always welcome. You can also leave a voluntary tip to buy the author a coffee and support continued maintenance. Thank you to everyone helping the duck along.
-
-<p align="center"><a href="assets/wechat-support.jpg"><img src="assets/wechat-support.jpg" alt="WeChat tip QR code; click to view the original image" width="240"></a><br><sub>Optional support via WeChat · Click the image for full size</sub></p>
+The upstream author's work is at [fanhao375/microduck-replica](https://github.com/fanhao375/microduck-replica). This fork maintains Runx's iteration patches only and does not collect donations.
