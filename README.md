@@ -2,6 +2,12 @@
 
 **简体中文** · [English](README.en.md)
 
+> **润象科技维护分支 · [mrunx.com](https://mrunx.com)**
+>
+> 本仓库 fork 自 [fanhao375/microduck-replica](https://github.com/fanhao375/microduck-replica)，默认分支 `our-fork` 维护润象的自主迭代补丁，改动清单见 [CHANGELOG.md](CHANGELOG.md)。
+> 许可证边界与上游保持一致、不做更改：代码 [Apache-2.0](LICENSE)，3D 模型与文档 [CC BY-NC-SA 4.0](LICENSE)，详见 [NOTICE.md](NOTICE.md)。
+> 本仓库与上游项目均与 Pollen Robotics 无隶属关系，未获其背书。
+
 基于 [Pollen Robotics Microduck](https://pollen-robotics.com/microduck/) 的第三方整机复刻项目，提供从采购、打印、装配到标定、控制和训练的资料。
 
 **飞特 HD-1910 版本已完成整机实机验证：站立、行走、前滚翻后起身均已跑通。** 主线使用 **15 颗飞特 HD-1910 舵机**，提供可烧录的**复刻镜像**和 **Microduck Studio 网页中控**，通过手机或电脑浏览器完成配网、标定和遥控。

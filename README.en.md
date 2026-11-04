@@ -2,6 +2,12 @@
 
 **English** · [简体中文](README.md)
 
+> **Maintained by Runx Technology · [mrunx.com](https://mrunx.com)**
+>
+> This repository is a fork of [fanhao375/microduck-replica](https://github.com/fanhao375/microduck-replica). The `our-fork` branch carries Runx's own iteration patches; see [CHANGELOG.md](CHANGELOG.md).
+> Licensing is unchanged from upstream: code is [Apache-2.0](LICENSE), 3D models and documentation are [CC BY-NC-SA 4.0](LICENSE). See [NOTICE.md](NOTICE.md).
+> Neither this repository nor the upstream project is affiliated with or endorsed by Pollen Robotics.
+
 A third-party full-robot replica project based on [Pollen Robotics' Microduck](https://pollen-robotics.com/microduck/), with resources for sourcing parts, printing, assembly, calibration, control, and training.
 
 **The Feetech HD-1910 build has passed real hardware validation: standing, walking, a forward roll and standing back up.** Our main build uses **15 Feetech HD-1910 servos**. We provide a **ready-to-flash system image** and the **Microduck Studio web console** for Wi-Fi setup, calibration, and remote control from a phone or computer browser.
