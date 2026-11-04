@@ -757,6 +757,34 @@ async function refreshAccessSession() {
   link.reconnect();
 }
 
+function PowerCard({ api }) {
+  const [msg, setMsg] = useState('');
+  const [err, setErr] = useState('');
+  const [busy, setBusy] = useState('');
+  async function submit(action) {
+    setBusy(action); setMsg(''); setErr('');
+    try {
+      const result = await api('/api/power', { action });
+      if (!result.ok) throw new Error(result.error || '电源指令失败');
+      setMsg(result.message || '指令已提交');
+    } catch (reason) {
+      setErr(reason.message || '连接中断，指令可能没有生效');
+    } finally { setBusy(''); }
+  }
+  return html`<div class="board" style="padding:16px 20px">
+    <div style="font-size:15px;font-weight:600;margin-bottom:6px">电源</div>
+    <div style="font-size:13px;color:var(--text-2);margin-bottom:12px">直接控制鸭子 Zero 的系统电源。关机前先让鸭子站稳，或用手接住它。</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <${TwoStep} cls="btn-light" label=${busy === 'reboot' ? '提交中…' : '重启'} busyLabel="提交中…"
+        ask="确定重启鸭子？页面会断开，约 1-2 分钟后恢复。" onConfirm=${() => submit('reboot')} />
+      <${TwoStep} cls="btn-light" label=${busy === 'shutdown' ? '提交中…' : '关机'} busyLabel="提交中…"
+        ask="确定关机？鸭子将断电，本页停止响应，需要手动重新上电。" onConfirm=${() => submit('shutdown')} />
+    </div>
+    ${msg ? html`<div style="font-size:13px;color:#1a7f37;margin-top:10px" role="status">${msg}</div>` : null}
+    ${err ? html`<div style="font-size:13px;color:var(--red,#b42318);margin-top:10px" role="alert">${err}</div>` : null}
+  </div>`;
+}
+
 function Settings({ st, tune }) {
   const [v, setV] = useState(loadStage());
   const pick = (x) => { setV(x); applyStage(x); try { localStorage.setItem('studio.stage', x); } catch { /* 隐私模式 */ } };
@@ -765,6 +793,7 @@ function Settings({ st, tune }) {
     <${AiSshEntry} />
     <${UpdateSettings} api=${api} csrf=${csrf} />
     <${AiSettings} api=${api} />
+    <${PowerCard} api=${api} />
     <div class="board" style="padding:16px 20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center">
       <span style="font-size:15px;font-weight:600;flex:1">日志和诊断</span>
       <a class="settings-logs" href="#/logs" style="font-size:15px">日志</a>

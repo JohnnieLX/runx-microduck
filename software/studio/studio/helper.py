@@ -218,6 +218,12 @@ def wifi_hotspot_up(by, timeout=40):
     return _call("wifi-hotspot-up", {"by": by}, timeout)
 
 
+def power(by, action, timeout=15):
+    """提交系统关机 / 重启（小助手以 root 跑 systemctl --no-block，立即返回不等待）。
+    action 只认 "shutdown" / "reboot"。回 (ok, result, detail)。"""
+    return _call("power", {"by": by, "action": action}, timeout)
+
+
 def calib_read(by=None, timeout=10):
     """只读主程序的标定文件和现在的模式（calib-read）。回 (ok, result, detail)。"""
     payload = {"by": by} if by else {}

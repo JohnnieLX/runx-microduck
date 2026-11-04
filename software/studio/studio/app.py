@@ -171,7 +171,7 @@ def build_app(*, auth, robotd, log, web_dir, duck, names=(), state_dir=None, dev
         own_prepared=(native.get('bundle_schema')=='microduck-controller-payload/1' and native.get('active') is True
             and native.get('phase')=='prepared' and isinstance(native_transaction,str)
             and native.get('transaction_id')==native_transaction)
-        guarded=updates.marker.exists() or (updates.installing() and not own_prepared)
+        guarded=updates.installing() and not own_prepared
         if (guarded or busy or (servo is not None and servo.state != 'closed')
             or mapping_requests or (pad is not None and getattr(getattr(pad,'mapping',None),'blocked',False))
             or (motion is not None and (motion.state != 'idle' or motion.session is not None))
@@ -229,6 +229,36 @@ def build_app(*, auth, robotd, log, web_dir, duck, names=(), state_dir=None, dev
         return guard.origin_ok(conn.headers.get("origin"), conn.headers.get("host", ""))
 
     # ---- HTTP ----
+
+    async def api_power(request):
+        def response(data, status=200):
+            return JSONResponse(data, status_code=status, headers={'Cache-Control':'no-store'})
+        _, sess = session_of(request)
+        if not auth.has_password():
+            return response({'ok':False,'code':'password_required','error':'请先在设置中配置网页密码，再使用电源操作'},403)
+        if not sess:
+            return response({'ok':False,'code':'unauthorized','error':'请先登录'},401)
+        if not origin_ok(request) or request.headers.get('x-csrf') != sess['csrf']:
+            return response({'ok':False,'code':'csrf','error':'请求来源或登录令牌不正确'},403)
+        raw = bytearray()
+        try:
+            async for chunk in request.stream():
+                raw.extend(chunk)
+                if len(raw) > 4096:
+                    return response({'ok':False,'code':'oversize','error':'请求过大'},413)
+            data = json.loads(raw.decode('utf-8') or '{}')
+        except ValueError:
+            return response({'ok':False,'code':'bad_json','error':'请求不是合法 JSON'},400)
+        action = data.get('action')
+        if action not in ('shutdown', 'reboot'):
+            return response({'ok':False,'code':'bad_action','error':'action 只认 shutdown / reboot'},400)
+        ok, result, detail = helper.power('Studio', action, timeout=15)
+        if not ok:
+            reason = (detail or {}).get('reason') or (result if isinstance(result, str) else None) or '电源指令失败'
+            return response({'ok':False,'code':str(result or 'helper'),'error':reason},502)
+        message = ('关机指令已提交，鸭子将在几秒后断电，本页会停止响应；重新上电后再打开网页'
+                   if action == 'shutdown' else '重启指令已提交，本页会短暂断开，约 1-2 分钟后恢复')
+        return response({'ok':True,'message':message,'action':action})
 
     async def api_updates(request):
         try:
@@ -1606,6 +1636,7 @@ def build_app(*, auth, robotd, log, web_dir, duck, names=(), state_dir=None, dev
         Route("/api/logout", api_logout, methods=["POST"]),
         Route("/api/password", api_password, methods=["POST"]),
         Route("/api/ssh", api_ssh, methods=["POST"]),
+        Route("/api/power", api_power, methods=["POST"]),
         Route("/api/logs", api_logs),
         Route("/api/diag", api_diag),
         Route("/api/profile", api_profile),

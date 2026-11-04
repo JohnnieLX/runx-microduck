@@ -74,7 +74,7 @@ import types
 VERSION = "0.7.2"
 VERBS = ("bus-take", "bus-give-back", "bus-abort", "pad-pair", "pad-forget",
          "wifi-hotspot-down", "wifi-hotspot-up", "calib-read", "calib-commit", "ssh-status", "ssh-password",
-         "imu-recalibrate", "robotd-update")
+         "imu-recalibrate", "robotd-update", "power")
 
 EXIT_OK, EXIT_ARGS, EXIT_STATE, EXIT_BUSY, EXIT_FAIL, EXIT_RETAKE = 0, 2, 3, 4, 5, 6
 
@@ -3335,6 +3335,27 @@ def native_update_conflict(op):
     if active:raise Stop(EXIT_STATE,'native_update_active','主程序更新尚未完成：先完成或恢复更新，再操作总线 / 标定')
 
 
+def verb_power(op, args):
+    """提交系统电源操作（systemctl --no-block，立即返回）。只认 action=shutdown / reboot。
+    跟 Microduck-Console 的 power_control 同一思路：系统拥有关机重启，helper 只负责把指令递进去。"""
+    by = args.get("by")
+    action = args.get("action")
+    if not isinstance(by, str) or not by.strip() or len(by) > 80:
+        raise Stop(EXIT_ARGS, "bad_args", "by 要是长度 ≤80 的文本")
+    if action not in ("shutdown", "reboot"):
+        raise Stop(EXIT_ARGS, "bad_args", "power 只认 action=shutdown / reboot")
+    op.by = by.strip()
+    label = "关机" if action == "shutdown" else "重启"
+    op.emit("power", "info", f"{op.by} 请求{label}（systemctl --no-block）")
+    rc, out, err = op.ctx.run(["/usr/bin/systemctl", "--no-block",
+                               "poweroff" if action == "shutdown" else "reboot"], timeout=10.0)
+    msg = (err or out).strip()[:300]
+    if rc != 0:
+        return op.finish(EXIT_FAIL, "submit_failed", f"systemctl 没接受{label}指令：{msg or f'退出码 {rc}'}",
+                         {"rc": rc, "stderr": msg})
+    return op.finish(EXIT_OK, "submitted", f"{label}指令已提交给系统", {"action": action})
+
+
 def run(argv, ctx):
     verb = argv[1] if len(argv) > 1 else None
     op = Op(ctx, verb or "?")
@@ -3372,6 +3393,8 @@ def run(argv, ctx):
             return verb_calib_commit(op, args, raw)
         if verb == "imu-recalibrate":
             return verb_imu_recalibrate(op, args, raw)
+        if verb == "power":
+            return verb_power(op, args)
         if verb == "robotd-update":
             return verb_robotd_update(op, args, raw)
         if verb == "ssh-status":
