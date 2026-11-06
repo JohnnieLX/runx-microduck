@@ -86,6 +86,11 @@ class Bootstrap(unittest.TestCase):
             self.assertIn('--speech-deps /opt/microduck/resources/asr-deps',voice)
             self.assertIn('ECHO_VOICE_MODE=actions',voice)
             self.assertIn('microduck-voice-prepare.service',voice)
+            standalone=(Path(__file__).resolve().parents[2]/'duck-echo/duck-echo.service').read_text()
+            for unit in (voice,standalone):
+                self.assertIn('Environment=ECHO_REPLY_MODE=duck',unit)
+                self.assertIn('EnvironmentFile=-/etc/default/duck-echo',unit)
+                self.assertIn('RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6',unit)
             self.assertIn('current/studio/deploy/microduck-helper',(root/'usr/local/sbin/microduck-helper').read_text())
             self.assertTrue((root/'usr/local/lib/microduck-updater/updaterd').is_file())
             self.assertNotIn('robotd', (root/'etc/systemd/system/microduck-updater-engine.service').read_text().split('ExecStart=')[1])

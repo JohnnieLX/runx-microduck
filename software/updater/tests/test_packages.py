@@ -39,7 +39,9 @@ class Packages(unittest.TestCase):
     def test_runtime_whitelist_excludes_state_and_development(self):
         for name in ('software/studio/run.py','software/studio/studio/app.py','software/studio/web/app.js',
                      'software/studio/deps/anyio/__init__.py','software/studio/deploy/microduck-helper',
-                     'software/duck-echo/duck_echo.py','software/duck-echo/voice_commands.py'):
+                     'software/duck-echo/duck_echo.py','software/duck-echo/voice_commands.py',
+                     'software/duck-echo/remote_models.py','software/duck-echo/remote_dialogue.py',
+                     'software/duck-echo/intent_gateway.py'):
             self.assertIsNotNone(runtime_path(name),name)
         for name in ('software/studio/state/password.json','software/studio/tests/test_http.py',
                      'software/studio/dev/fake_robotd.py','software/studio/deps/__pycache__/key.pyc',

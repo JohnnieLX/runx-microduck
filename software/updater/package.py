@@ -12,7 +12,8 @@ MAX_ARTIFACT = 128 * 1024 * 1024
 MAX_METADATA = 1024 * 1024
 _VERSION = re.compile(r'(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?\Z')
 VOICE = {'duck_echo.py','audio_control.py','continuous_audio.py','music_feel.py',
-         'music_interaction.py','speech_control.py','voice_commands.py','pad_mapping.py','duck-echo.service','install.py'}
+         'music_interaction.py','speech_control.py','voice_commands.py','pad_mapping.py',
+         'remote_models.py','remote_dialogue.py','intent_gateway.py','duck-echo.service','install.py'}
 
 class PackageError(ValueError): pass
 
