@@ -10,16 +10,21 @@
 
 ### Changed
 
-- **README 去上游个人化**：中英两版 README 保留教程、BOM 与实测记录，移除上游作者
-  的个人运营入口 —— 微信群二维码、支付宝/微信打赏码、逐版发版日志压缩为版本沿革一段；
-  下载入口改标“上游发布页”，issue 与 PR 指引改指本仓，第一人称改第三人称。
-  改写依据为上游文档的 CC BY 4.0 许可，署名保留在页首。
 - **文档许可放宽**：本项目原创文档由 CC BY-NC-SA 4.0 改为 **CC BY 4.0**，
   允许商业使用、改写与再分发，只需署名。上游模型及其派生几何不受影响，
   仍为 CC BY-NC-SA 4.0。LICENSE 相应从“双许可”改为按内容类型分三条声明（本次提交）。
 
 ### Added
 
+- **自由语音对话**：`software/duck-echo/` 新增云端识别、大模型应答与语音合成链路
+  （`remote_models.py`、`remote_dialogue.py`），按住 R3 说话即可闲聊，不再受固定指令表限制。
+  识别、应答与合成的地址和模型由 `/etc/default/duck-echo` 注入，仓库内不含任何凭证（`6f62869`）。
+- **动作二次确认**：新增 `intent_gateway.py`，对话中的“坐下／站起来”只生成候选，
+  6 秒内再次确认才下发动作，超时作废（`6f62869`）。
+- **对话模式禁用本地语法**：`speech_control.py` 在对话模式下不启动板载命令识别，
+  避免同一句话被本地规则提前执行（`6f62869`）。
+- **升级包白名单**：OTA 打包白名单补入对话相关模块，`duck-echo.service` 的
+  `RestrictAddressFamilies` 增加 `AF_INET AF_INET6`，保证升级后外网链路可用（`2591fdb`）。
 - **Studio 电源控制**：`software/studio/microduck-helper` 新增 root 级 `power` 动词，
   支持 `shutdown` / `reboot`，带 action 白名单与调用者记录（`c78c92d`）。
 - **Studio 电源接口**：`software/studio/app.py` 新增 `/api/power` 路由，

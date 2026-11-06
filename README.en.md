@@ -102,11 +102,40 @@ As of **2026-10-25**, **the Feetech replica, first-use workflow and robot motion
 
 ---
 
+## 🧭 What this Runx branch adds
+
+This repository keeps a set of long-running patches on top of the replica, all on the `our-fork` branch and itemised in [CHANGELOG.md](CHANGELOG.md). Differences from upstream:
+
+| Area | What it does | Status |
+|---|---|---|
+| **Spoken dialogue** | Hold R3 to talk; speech recognition, LLM reply and speech synthesis run as a chain, in Chinese or English, with no fixed command list | Working on hardware |
+| **Two-step motion confirm** | “Sit down / stand up” only becomes a candidate; it runs after you say “confirm” within 6 seconds, otherwise it expires | Verified on the board |
+| **No local pre-emption** | The on-board command grammar is disabled in dialogue mode, so one sentence is never executed early by local rules | Active |
+| **Web power control** | Shut down or reboot from Studio; the root allow-list adds session, origin and CSRF checks | Released |
+| **Upgrade reliability** | Fixed upgrade self-lock, extracted-directory permissions and an over-strict preflight | Fixed |
+| **Documentation licence** | Original docs relaxed to CC BY 4.0 — commercial use and remixing allowed with attribution | Updated |
+
+### Using spoken dialogue
+
+1. Press R3 to start (press again to exit), wait for the cue and speak;
+2. Chit-chat is answered directly; “duck, sit down please” returns a confirmation request;
+3. The motion only runs after you say “confirm” within 6 seconds; otherwise ask again.
+
+Audio capture and playback stay on the board; recognition, replies and synthesis go through our own services. Endpoints and models come from `/etc/default/duck-echo`, and the repository contains no credentials. Board setup and tests are in [`software/duck-echo/`](software/duck-echo/README.md).
+
+### Boundaries
+
+- Motion confirmation has been verified with injected speech on the board; a full human end-to-end pass is still in progress;
+- Vision-language (VLM) code is in the branch but disabled by plan;
+- Upstream images, gait models and training code are untouched — this branch does not change motion-safety logic.
+
+---
+
 ## 💻 Software · system image and Microduck Studio
 
 **Replica image 20261027: web software updates and local Mandarin posture commands.** Settings can check, download or upload signed software packages, with rollback on failed installation. Tap R3 to toggle listening for “sit down” and “stand up”; the Mandarin model is included and needs no cloud account. Web motion recording/playback, lively mode and model management are retained. Existing cards need one SSH bootstrap; routine software updates then use the browser without reflashing.
 
-The robot runtime, gait models and bus-ID-200 IMU autodetection are unchanged from 20261023c. Software, signed transactions, browser flows and read-only image checks passed; physical first boot, existing-card upgrades/rollback and live acoustics still need acceptance. Music-driven head/body motion remains unresolved, and spoken AI dialogue is not connected. [Image and checksums](https://github.com/fanhao375/microduck-replica/releases/tag/microduck-replica-image-20261027) · [Software package](https://github.com/fanhao375/microduck-replica/releases/tag/microduck-software-v2026.10.27) · [Update and voice guide](docs/软件更新与语音使用说明-20261027.md) · [Verification scope](docs/superpowers/verification/2026-10-27-web-updates.md)
+The robot runtime, gait models and bus-ID-200 IMU autodetection are unchanged from 20261023c. Software, signed transactions, browser flows and read-only image checks passed; physical first boot, existing-card upgrades/rollback and live acoustics still need acceptance. Music-driven head/body motion remains unresolved; spoken AI dialogue is connected in this branch — see the section above. [Image and checksums](https://github.com/fanhao375/microduck-replica/releases/tag/microduck-replica-image-20261027) · [Software package](https://github.com/fanhao375/microduck-replica/releases/tag/microduck-software-v2026.10.27) · [Update and voice guide](docs/软件更新与语音使用说明-20261027.md) · [Verification scope](docs/superpowers/verification/2026-10-27-web-updates.md)
 
 <p align="center"><a href="software/studio/README.md"><img src="assets/studio-overview-20261025-demo.jpg" alt="Current Microduck Studio interface with simulated device readings" width="920"></a><br><sub>Studio interface demonstration with simulated device readings</sub></p>
 
