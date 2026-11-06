@@ -95,29 +95,18 @@ class RemoteDialogue:
             transcript = validate_transcript(self.asr.transcribe(phrase, cancelled, self.timeout))
             control.check()
             user = {'role': 'user', 'content': transcript}
-            remember = True
-            direct_reply = None
+            with self._lock:
+                context = self._trim(self._history + [user])
+            prompt = INTENT_SYSTEM_PROMPT if self.intent_gateway is not None else SYSTEM_PROMPT
+            messages = [{'role': 'system', 'content': prompt}] + context
+            stage = 'llm'
+            reply = validate_reply_text(self.llm.complete(messages, cancelled, self.timeout))
+            control.check()
             if self.intent_gateway is not None:
                 stage = 'intent'
-                direct_reply = self.intent_gateway.handle_transcript(
-                    transcript, allowed=lambda: not cancelled())
+                reply = validate_reply_text(self.intent_gateway.reply(
+                    reply, allowed=lambda: not cancelled()))
                 control.check()
-            if direct_reply is not None:
-                reply = validate_reply_text(direct_reply)
-                remember = False
-            else:
-                with self._lock:
-                    context = self._trim(self._history + [user])
-                prompt = INTENT_SYSTEM_PROMPT if self.intent_gateway is not None else SYSTEM_PROMPT
-                messages = [{'role': 'system', 'content': prompt}] + context
-                stage = 'llm'
-                reply = validate_reply_text(self.llm.complete(messages, cancelled, self.timeout))
-                control.check()
-                if self.intent_gateway is not None:
-                    stage = 'intent'
-                    reply = validate_reply_text(self.intent_gateway.reply(
-                        reply, allowed=lambda: not cancelled()))
-                    control.check()
             stage = 'tts'
             # HttpTts returns 48 kHz mono; playback needs duplicated stereo.
             audio = decode_tts_audio(self.tts.synthesize(reply, cancelled, self.timeout), channels=1)
@@ -125,11 +114,10 @@ class RemoteDialogue:
             stage = 'playback'
             self.play_reply(audio, allowed=lambda: not cancelled())
             control.check()
-            if remember:
-                with self._lock:
-                    self._history = self._trim(self._history + [
-                        user, {'role': 'assistant', 'content': reply},
-                    ])
+            with self._lock:
+                self._history = self._trim(self._history + [
+                    user, {'role': 'assistant', 'content': reply},
+                ])
             return {'ok': True, 'transcript_chars': len(transcript), 'reply_chars': len(reply)}
         except RemoteCancelled:
             return {'ok': False, 'cancelled': True}

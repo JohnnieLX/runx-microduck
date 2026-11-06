@@ -57,15 +57,9 @@ class FakeTTS:
 
 class FakeIntentGateway:
     def __init__(self):
-        self.direct_reply = None
         self.model_replies = []
-        self.transcripts = []
         self.model_texts = []
         self.cancel_count = 0
-
-    def handle_transcript(self, transcript, allowed):
-        self.transcripts.append((transcript, allowed()))
-        return self.direct_reply
 
     def reply(self, text, allowed):
         self.model_texts.append((text, allowed()))
@@ -169,39 +163,20 @@ class RemoteDialogueTests(unittest.TestCase):
         self.assertFalse(result['ok'])
         self.assertEqual(self.played, [])
 
-    def test_intent_mode_uses_strict_prompt_and_returns_motion_candidate_prompt(self):
+    def test_intent_mode_uses_strict_prompt_and_returns_execution_result(self):
         gateway = FakeIntentGateway()
-        gateway.model_replies = ['准备坐下，请在6秒内说“确认”。']
+        gateway.model_replies = ['已坐下。']
         raw = '{"version":1,"type":"motion","action":"sit","args":{}}'
         dialogue = self.make(FakeASR(['坐下']), FakeLLM([raw]), gateway=gateway)
         result = dialogue.handle(b'\x00\x00\x00\x00', allowed=lambda: True)
         self.assertTrue(result['ok'])
-        self.assertEqual(gateway.transcripts, [('坐下', True)])
         self.assertEqual(gateway.model_texts, [(raw, True)])
         system = self.llm.calls[0][0][0]['content']
         self.assertIn('"version":1', system)
         self.assertIn('sit', system)
         self.assertIn('stand', system)
-        self.assertEqual(self.tts.calls[0][0], '准备坐下，请在6秒内说“确认”。')
-        self.assertEqual(dialogue.history[-1]['content'], '准备坐下，请在6秒内说“确认”。')
-
-    def test_confirmation_bypasses_llm_and_never_enters_later_history(self):
-        gateway = FakeIntentGateway()
-        gateway.direct_reply = '已坐下。'
-        dialogue = self.make(FakeASR(['确认', '下一个问题']), gateway=gateway)
-        result = dialogue.handle(b'\x00\x00\x00\x00', allowed=lambda: True)
-        self.assertTrue(result['ok'])
-        self.assertEqual(self.llm.calls, [])
         self.assertEqual(self.tts.calls[0][0], '已坐下。')
-        self.assertEqual(dialogue.history, [])
-
-        gateway.direct_reply = None
-        gateway.model_replies = ['普通回答']
-        self.llm.replies = ['{"version":1,"type":"chat","text":"普通回答"}']
-        self.assertTrue(dialogue.handle(b'\x00\x00\x00\x00', allowed=lambda: True)['ok'])
-        self.assertEqual(len(self.llm.calls), 1)
-        self.assertNotIn('确认', str(self.llm.calls[0][0]))
-        self.assertNotIn('已坐下', str(self.llm.calls[0][0]))
+        self.assertEqual(dialogue.history[-1]['content'], '已坐下。')
 
     def test_cancel_and_reset_invalidate_gateway_candidate(self):
         gateway = FakeIntentGateway()

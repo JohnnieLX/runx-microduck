@@ -109,7 +109,7 @@ This repository keeps a set of long-running patches on top of the replica, all o
 | Area | What it does | Status |
 |---|---|---|
 | **Spoken dialogue** | Hold R3 to talk; speech recognition, LLM reply and speech synthesis run as a chain, in Chinese or English, with no fixed command list | Working on hardware |
-| **Two-step motion confirm** | “Sit down / stand up” only becomes a candidate; it runs after you say “confirm” within 6 seconds, otherwise it expires | Verified on the board |
+| **Direct motion execution** | “Sit down / stand up” runs as soon as the model resolves the action, with no second confirmation | Verified on the board |
 | **No local pre-emption** | The on-board command grammar is disabled in dialogue mode, so one sentence is never executed early by local rules | Active |
 | **Web power control** | Shut down or reboot from Studio; the root allow-list adds session, origin and CSRF checks | Released |
 | **Upgrade reliability** | Fixed upgrade self-lock, extracted-directory permissions and an over-strict preflight | Fixed |
@@ -118,14 +118,14 @@ This repository keeps a set of long-running patches on top of the replica, all o
 ### Using spoken dialogue
 
 1. Press R3 to start (press again to exit), wait for the cue and speak;
-2. Chit-chat is answered directly; “duck, sit down please” returns a confirmation request;
-3. The motion only runs after you say “confirm” within 6 seconds; otherwise ask again.
+2. Chit-chat is answered directly; “duck, sit down please” performs the motion right away and reports the result;
+3. If a safety check blocks the motion, the reply explains why — try again later.
 
 Audio capture and playback stay on the board; recognition, replies and synthesis go through our own services. Endpoints and models come from `/etc/default/duck-echo`, and the repository contains no credentials. Board setup and tests are in [`software/duck-echo/`](software/duck-echo/README.md).
 
 ### Boundaries
 
-- Motion confirmation has been verified with injected speech on the board; a full human end-to-end pass is still in progress;
+- The spoken motion path has been verified with injected speech on the board; a full human end-to-end pass is still in progress;
 - Vision-language (VLM) code is in the branch but disabled by plan;
 - Upstream images, gait models and training code are untouched — this branch does not change motion-safety logic.
 

@@ -80,80 +80,32 @@ class FakePosture:
         return dict(self.result)
 
 
-class ConfirmationTests(unittest.TestCase):
-    def make(self, result=None, now=None):
+class DirectExecutionTests(unittest.TestCase):
+    def make(self, result=None):
         self.posture = FakePosture(result)
-        self.now = [100.0] if now is None else now
-        return gateway.IntentGateway(self.posture, clock=lambda: self.now[0])
+        return gateway.IntentGateway(self.posture)
 
     def test_chat_is_returned_without_motion(self):
         control = self.make()
         self.assertEqual(control.reply(model_intent('chat', text='不要坐下')), '不要坐下')
         self.assertEqual(self.posture.commands, [])
-        self.assertEqual(control.handle_transcript('确认'), '没有待确认的动作。')
-        self.assertEqual(self.posture.commands, [])
 
-    def test_motion_candidate_requires_exact_confirmation(self):
-        for phrase in ('确认', '是的', '执行', ' 确认。'):
-            with self.subTest(phrase=phrase):
+    def test_motion_runs_immediately_without_a_second_confirmation(self):
+        for action, reply in (('sit', '已坐下。'), ('stand', '已站起来。')):
+            with self.subTest(action=action):
                 control = self.make()
-                prompt = control.reply(model_intent(action='sit'))
-                self.assertEqual(prompt, '准备坐下，请在6秒内说“确认”。')
-                self.assertEqual(self.posture.commands, [])
-                self.assertEqual(control.handle_transcript(phrase), '已坐下。')
-                self.assertEqual(self.posture.commands, ['sit'])
+                self.assertEqual(control.reply(model_intent(action=action)), reply)
+                self.assertEqual(self.posture.commands, [action])
 
-    def test_nonconfirmation_clears_candidate_and_continues_as_new_input(self):
-        for phrase in ('请确认', '确认坐下', '不要执行', '他说确认', '换个话题'):
-            with self.subTest(phrase=phrase):
-                control = self.make()
-                control.reply(model_intent(action='sit'))
-                self.assertIsNone(control.handle_transcript(phrase))
-                self.assertEqual(control.handle_transcript('确认'), '没有待确认的动作。')
-                self.assertEqual(self.posture.commands, [])
-
-    def test_candidate_expires_at_six_seconds(self):
+    def test_repeated_motion_request_executes_each_time(self):
         control = self.make()
         control.reply(model_intent(action='sit'))
-        self.now[0] += 5.999
-        self.assertEqual(control.handle_transcript('确认'), '已坐下。')
-        self.assertEqual(self.posture.commands, ['sit'])
-
-        control = self.make()
         control.reply(model_intent(action='sit'))
-        self.now[0] += 6.0
-        self.assertEqual(control.handle_transcript('确认'), '动作候选已过期，请重新提出。')
-        self.assertEqual(self.posture.commands, [])
-
-    def test_cancel_and_new_input_invalidate_candidate(self):
-        control = self.make()
-        control.reply(model_intent(action='sit'))
-        control.cancel()
-        self.assertEqual(control.handle_transcript('确认'), '没有待确认的动作。')
-        self.assertEqual(self.posture.commands, [])
-
-        control.reply(model_intent(action='sit'))
-        self.assertIsNone(control.handle_transcript('新的问题'))
-        self.assertEqual(self.posture.commands, [])
-
-    def test_new_candidate_replaces_previous_action(self):
-        control = self.make()
-        control.reply(model_intent(action='sit'))
-        control.reply(model_intent(action='stand'))
-        self.assertEqual(control.handle_transcript('确认'), '已站起来。')
-        self.assertEqual(self.posture.commands, ['stand'])
-
-    def test_repeated_confirmation_never_repeats_execution(self):
-        control = self.make()
-        control.reply(model_intent(action='sit'))
-        self.assertEqual(control.handle_transcript('确认'), '已坐下。')
-        self.assertEqual(control.handle_transcript('确认'), '没有待确认的动作。')
-        self.assertEqual(self.posture.commands, ['sit'])
+        self.assertEqual(self.posture.commands, ['sit', 'sit'])
 
     def test_disallowed_generation_does_not_dispatch(self):
         control = self.make()
-        control.reply(model_intent(action='sit'))
-        self.assertEqual(control.handle_transcript('确认', allowed=lambda: False), '动作已取消。')
+        self.assertEqual(control.reply(model_intent(action='sit'), allowed=lambda: False), '动作已取消。')
         self.assertEqual(self.posture.commands, [])
 
     def test_cancel_during_execution_cannot_report_stale_success(self):
@@ -168,10 +120,9 @@ class ConfirmationTests(unittest.TestCase):
                 return {'accepted': True, 'changed': True}
 
         posture = BlockingPosture()
-        control = gateway.IntentGateway(posture, clock=lambda: 1)
-        control.reply(model_intent(action='sit'))
+        control = gateway.IntentGateway(posture)
         result = []
-        worker = threading.Thread(target=lambda: result.append(control.handle_transcript('确认')))
+        worker = threading.Thread(target=lambda: result.append(control.reply(model_intent(action='sit'))))
         worker.start()
         self.assertTrue(entered.wait(1))
         control.cancel()
@@ -183,8 +134,7 @@ class ConfirmationTests(unittest.TestCase):
 
     def test_failed_posture_result_is_not_reported_as_success(self):
         control = self.make({'accepted': False, 'reason': 'not homed'})
-        control.reply(model_intent(action='sit'))
-        self.assertEqual(control.handle_transcript('确认'), '动作未执行：not homed')
+        self.assertEqual(control.reply(model_intent(action='sit')), '动作未执行：not homed')
 
 
 class FakeRobot:
@@ -218,24 +168,14 @@ class FakeRobot:
 class PostureSafetyIntegrationTests(unittest.TestCase):
     def make(self, robot, guard=lambda: True, lease=nullcontext):
         posture = voice.PostureCommands(robot, guard=guard, lease=lease)
-        return gateway.IntentGateway(posture, clock=lambda: 1)
+        return gateway.IntentGateway(posture)
 
-    def test_unconfirmed_candidates_never_reach_existing_posture_executor(self):
+    def test_valid_requests_use_no_move_or_arbitrary_rpc(self):
         for action in ('sit', 'stand'):
             with self.subTest(action=action):
                 robot = FakeRobot(sitting=action == 'stand')
                 control = self.make(robot)
-                prompt = control.reply(model_intent(action=action))
-                self.assertEqual(prompt, '准备' + ('坐下' if action == 'sit' else '站起来') + '，请在6秒内说“确认”。')
-                self.assertEqual(robot.calls, [])
-
-    def test_confirmed_valid_candidates_use_no_move_or_arbitrary_rpc(self):
-        for action in ('sit', 'stand'):
-            with self.subTest(action=action):
-                robot = FakeRobot(sitting=action == 'stand')
-                control = self.make(robot)
-                control.reply(model_intent(action=action))
-                reply = control.handle_transcript('确认')
+                reply = control.reply(model_intent(action=action))
                 self.assertEqual(reply, '已坐下。' if action == 'sit' else '已站起来。')
                 self.assertEqual(robot.mutations(), [('robot.do', {'skill': 'sit_toggle'})])
                 self.assertNotIn('robot.move', [method for method, _ in robot.calls])
@@ -260,8 +200,7 @@ class PostureSafetyIntegrationTests(unittest.TestCase):
         for name, robot, guard, lease, no_reads in cases:
             with self.subTest(name=name):
                 control = self.make(robot, guard=guard, lease=lease)
-                control.reply(model_intent(action='sit'))
-                reply = control.handle_transcript('确认')
+                reply = control.reply(model_intent(action='sit'))
                 self.assertIsInstance(reply, str)
                 self.assertIn('未执行', reply)
                 self.assertEqual(robot.mutations(), [])
@@ -277,9 +216,7 @@ class PostureSafetyIntegrationTests(unittest.TestCase):
         for raw in invalid:
             with self.subTest(raw=raw), self.assertRaises(ValueError):
                 control.reply(raw)
-            self.assertEqual(control.handle_transcript('确认'), '没有待确认的动作。')
         self.assertEqual(control.reply(model_intent('chat', text='他说坐下')), '他说坐下')
-        self.assertEqual(control.handle_transcript('确认'), '没有待确认的动作。')
         self.assertEqual(robot.calls, [])
 
 
