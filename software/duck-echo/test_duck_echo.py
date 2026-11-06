@@ -182,6 +182,17 @@ class PlaybackTests(unittest.TestCase):
         audio.player_thread = SimpleNamespace(is_alive=lambda: True)
         self.assertTrue(audio.playback_active())
 
+    def test_reply_playback_has_no_duck_pitch_or_volume_effects(self):
+        audio = echo.AlsaAudio('capture', 'playback')
+        with patch.object(echo.subprocess, 'Popen', return_value=self.player(0)) as spawn:
+            audio.play_reply(pcm([1000, 1000]))
+            command = spawn.call_args.args[0]
+            self.assertFalse(any(token.startswith('--pitch') for token in command))
+            self.assertFalse(any(token.startswith('--speed') for token in command))
+            self.assertFalse(any(token.startswith('--volume') for token in command))
+            self.assertEqual(command[command.index('-r') + 1], '48000')
+            audio.finish_playback()
+
     def test_cancelled_playback_guard_is_rechecked_after_old_player_teardown(self):
         import inspect
         audio = echo.AlsaAudio('capture', 'playback')
@@ -208,6 +219,69 @@ class PlaybackTests(unittest.TestCase):
         self.assertEqual(calls, [{'timeout': 1}])
 
 
+class RemoteDialogueAssemblyTests(unittest.TestCase):
+    def test_missing_provider_contract_fails_explicitly_without_guessing_urls(self):
+        with patch.dict('os.environ', {}, clear=True), \
+                self.assertRaisesRegex(RuntimeError, 'ASR/LLM/TTS'):
+            echo.build_remote_dialogue(
+                SimpleNamespace(reply_mode='dialogue', voice_model='m', speech_deps=None),
+                lambda data: None)
+
+    def test_fake_adapters_assemble_provider_neutral_dialogue(self):
+        adapters = SimpleNamespace(asr=object(), llm=object(), tts=object())
+        dialogue = echo.build_remote_dialogue(
+            SimpleNamespace(reply_mode='dialogue'), lambda data: None, adapters=adapters)
+        self.assertIs(dialogue.asr, adapters.asr)
+        self.assertIs(dialogue.llm, adapters.llm)
+        self.assertIs(dialogue.tts, adapters.tts)
+        self.assertIsNone(dialogue.intent_gateway)
+
+    def test_build_dialogue_accepts_explicit_intent_gateway(self):
+        adapters = SimpleNamespace(asr=object(), llm=object(), tts=object())
+        gateway = object()
+        dialogue = echo.build_remote_dialogue(
+            SimpleNamespace(reply_mode='dialogue'), lambda pcm, allowed: None,
+            adapters=adapters, intent_gateway=gateway)
+        self.assertIs(dialogue.intent_gateway, gateway)
+
+
+class DialogueAdapterEnvTests(unittest.TestCase):
+    def test_documented_defaults_and_shared_platform_key(self):
+        adapters = echo.dialogue_adapters(SimpleNamespace(), {'ECHO_LLM_API_KEY': 'sk-shared'})
+        self.assertEqual(adapters.llm.url, 'https://ollama.mrunx.com/v1/chat/completions')
+        self.assertEqual(adapters.llm.model, 'qwen3-vl:4b-instruct')
+        self.assertEqual(adapters.tts.url, 'https://voice.mrunx.com/tts')
+        self.assertEqual(adapters.tts._api_key, 'sk-shared')
+        self.assertEqual(adapters.asr.url, 'https://voice.mrunx.com/asr')
+        self.assertEqual(adapters.asr._api_key, 'sk-shared')
+
+    def test_local_asr_override_keeps_the_onboard_recognizer(self):
+        adapters = echo.dialogue_adapters(
+            SimpleNamespace(voice_model='/models/vosk', speech_deps='/deps'),
+            {'ECHO_LLM_API_KEY': 'sk-llm', 'ECHO_ASR_BASE_URL': 'local'})
+        self.assertEqual(type(adapters.asr).__name__, 'LocalAsr')
+        self.assertEqual(adapters.asr.model_path, '/models/vosk')
+
+    def test_overrides_select_local_endpoints_and_separate_tts_key(self):
+        adapters = echo.dialogue_adapters(
+            SimpleNamespace(voice_model='/models/vosk', speech_deps='/deps'), {
+                'ECHO_LLM_API_KEY': 'sk-llm',
+                'ECHO_LLM_BASE_URL': 'http://127.0.0.1:11434/v1',
+                'ECHO_LLM_MODEL': 'qwen3:0.6b',
+                'ECHO_ASR_BASE_URL': 'http://127.0.0.1:1181',
+                'ECHO_ASR_API_KEY': 'sk-asr',
+                'ECHO_TTS_BASE_URL': 'http://127.0.0.1:1181',
+                'ECHO_TTS_API_KEY': 'sk-tts',
+                'ECHO_TTS_VOICE': 'default',
+            })
+        self.assertEqual(adapters.llm.url, 'http://127.0.0.1:11434/v1/chat/completions')
+        self.assertEqual(adapters.llm.model, 'qwen3:0.6b')
+        self.assertEqual(adapters.tts._api_key, 'sk-tts')
+        self.assertEqual(adapters.tts.voice, 'default')
+        self.assertEqual(adapters.asr.url, 'http://127.0.0.1:1181/asr')
+        self.assertEqual(adapters.asr._api_key, 'sk-asr')
+
+
 class TriggerModeTests(unittest.TestCase):
     def test_daemon_default_discards_unknown_pcm_and_explicit_echo_restores_replay(self):
         import continuous_audio
@@ -222,6 +296,44 @@ class TriggerModeTests(unittest.TestCase):
                     patch.object(continuous_audio.ContinuousAudio, 'play') as play:
                 self.assertEqual(echo.main(['daemon', *options]), 0)
                 self.assertEqual(play.called, should_play)
+
+    def test_dialogue_off_mode_injects_remote_worker_without_vosk_or_motion(self):
+        import speech_control
+        dialogue = SimpleNamespace(reset=lambda: None, handle=lambda pcm, allowed: {'ok': True})
+        def inspect_audio(audio, *args, **kwargs):
+            self.assertTrue(audio.voice.ready.wait(1))
+            self.assertIs(audio.voice.dialogue, dialogue)
+            self.assertFalse(audio.voice.execute_commands)
+            self.assertFalse(audio.voice.recognize_speech)
+            self.assertIsNone(audio.voice.recognizer)
+        with patch.object(echo.sys, 'platform', 'linux'), \
+                patch.object(echo, 'daemon', side_effect=inspect_audio), \
+                patch.object(echo, 'build_remote_dialogue', return_value=dialogue) as build, \
+                patch.object(echo.signal, 'signal'), patch.object(echo.logging, 'basicConfig'), \
+                patch('audio_control.AudioControlServer'), \
+                patch.object(speech_control, 'MandarinRecognizer') as recognizer, \
+                patch('intent_gateway.IntentGateway') as gateway:
+            self.assertEqual(echo.main(['daemon', '--reply-mode', 'dialogue', '--voice-mode', 'off']), 0)
+            build.assert_called_once()
+            self.assertIsNone(build.call_args.kwargs['intent_gateway'])
+            gateway.assert_not_called()
+            recognizer.assert_not_called()
+
+    def test_dialogue_actions_mode_constructs_gateway_with_existing_posture_guard(self):
+        import speech_control
+        dialogue = SimpleNamespace(reset=lambda: None, handle=lambda pcm, allowed: {'ok': True})
+        with patch.object(echo.sys, 'platform', 'linux'), \
+                patch.object(echo, 'daemon'), \
+                patch.object(echo, 'build_remote_dialogue', return_value=dialogue) as build, \
+                patch.object(echo.signal, 'signal'), patch.object(echo.logging, 'basicConfig'), \
+                patch('audio_control.AudioControlServer'), \
+                patch.object(speech_control, 'MandarinRecognizer'), \
+                patch('voice_commands.RobotClient'), \
+                patch('voice_commands.PostureCommands') as posture, \
+                patch('intent_gateway.IntentGateway') as gateway:
+            self.assertEqual(echo.main(['daemon', '--reply-mode', 'dialogue', '--voice-mode', 'actions']), 0)
+            gateway.assert_called_once_with(posture.return_value)
+            self.assertIs(build.call_args.kwargs['intent_gateway'], gateway.return_value)
 
     def test_toggle_daemon_has_private_control_and_shared_music_model_even_in_voice_off(self):
         import audio_control

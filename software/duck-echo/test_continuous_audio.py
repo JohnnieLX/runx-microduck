@@ -1,5 +1,6 @@
 """Continuous listening tests use PCM and fake processes, never robot hardware."""
 import array
+from contextlib import nullcontext
 import importlib
 import math
 import signal
@@ -74,6 +75,13 @@ class FakeAudio:
         if allowed is not None and not allowed():
             return
         self.calls.append(('play', data))
+        self.playing = True
+        self.played.set()
+
+    def play_reply(self, data, allowed=None):
+        if allowed is not None and not allowed():
+            return
+        self.calls.append(('reply', data))
         self.playing = True
         self.played.set()
 
@@ -286,7 +294,7 @@ class ContinuousTests(unittest.TestCase):
         self.now = [0.0]
         self.audio = continuous.ContinuousAudio(
             self.backend, capture_device='mic', maximum=1, silence=.1, minimum=.1,
-            tail=.2, clock=lambda: self.now[0])
+            tail=.2, clock=lambda: self.now[0], guard=lambda: True, lease=nullcontext)
         self.addCleanup(self.spawn.stop)
         self.addCleanup(self.audio.close)
 
@@ -335,6 +343,33 @@ class ContinuousTests(unittest.TestCase):
         self.assertTrue(eventually(lambda: sum(call[0] == 'play' for call in self.backend.calls
                                               if isinstance(call, tuple)) == 2))
 
+    def test_remote_reply_uses_natural_backend_and_existing_suppression(self):
+        self.start()
+        cancelled = []
+        self.audio.voice = SimpleNamespace(cancel=lambda: cancelled.append(True))
+        self.audio.play_reply(pcm(.02), allowed=lambda: True)
+        self.assertTrue(self.backend.played.wait(1))
+        self.assertIn(('reply', pcm(.02)), self.backend.calls)
+        self.assertEqual(cancelled, [], 'reply playback canceled its own dialogue transaction')
+        self.assertTrue(self.audio.suppressed())
+
+    def test_remote_reply_cancellation_reaches_blocking_backend(self):
+        entered, release = threading.Event(), threading.Event()
+        sent, allowed = [], [True]
+        def delayed_reply(data, allowed=None):
+            entered.set()
+            release.wait(1)
+            if allowed is None or allowed():
+                sent.append(data)
+        self.backend.play_reply = delayed_reply
+        self.start()
+        self.audio.play_reply(pcm(.02), allowed=lambda: allowed[0])
+        self.assertTrue(entered.wait(1))
+        allowed[0] = False
+        release.set()
+        self.assertTrue(eventually(lambda: not self.audio.output_pending))
+        self.assertEqual(sent, [])
+
     def test_command_cue_suppresses_audio_through_tail(self):
         process = self.start()
         observed = []
@@ -358,7 +393,7 @@ class ContinuousTests(unittest.TestCase):
                 release.wait(1)
                 return {'text': '坐下', 'confidence': 1}
         executor = SimpleNamespace(execute=lambda *a, **kw: actions.append('sit'))
-        self.audio.voice = VoiceControl(Recognizer, executor, self.audio.play)
+        self.audio.voice = VoiceControl(Recognizer, executor, self.audio.play, guard=lambda: True)
         self.addCleanup(self.audio.voice.close)
         process = self.start()
         self.feed_phrase(process)

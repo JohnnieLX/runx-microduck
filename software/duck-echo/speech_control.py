@@ -29,7 +29,7 @@ COMMAND_GRAMMAR = [
 
 
 class MandarinRecognizer:
-    def __init__(self, model_path, dependencies=None):
+    def __init__(self, model_path, dependencies=None, grammar=True):
         if dependencies:
             sys.path.insert(0, str(dependencies))
         from vosk import KaldiRecognizer, Model, SetLogLevel
@@ -38,9 +38,11 @@ class MandarinRecognizer:
             raise RuntimeError('Chinese speech model is not installed')
         self.model = Model(str(model_path))
         self.recognizer_type = KaldiRecognizer
-        grammar = [phrase for phrase in COMMAND_GRAMMAR
+        # Dialogue needs open-vocabulary speech; the command grammar would force
+        # unknown sentences into the sit/stand phrase set.
+        phrases = [phrase for phrase in COMMAND_GRAMMAR
                    if all(self.model.vosk_model_find_word(word) >= 0 for word in phrase.split())]
-        self.grammar = json.dumps(grammar, ensure_ascii=False)
+        self.grammar = json.dumps(phrases, ensure_ascii=False) if grammar else None
 
     def recognize(self, stereo, rate=48000):
         samples = array.array('h')
@@ -48,7 +50,8 @@ class MandarinRecognizer:
         # Input is already the selected microphone duplicated into stereo by
         # prepare_audio. Keep one channel; Kaldi's model config resamples 48k.
         mono = samples[::2].tobytes()
-        recognizer = self.recognizer_type(self.model, rate, self.grammar)
+        recognizer = (self.recognizer_type(self.model, rate, self.grammar)
+                      if self.grammar else self.recognizer_type(self.model, rate))
         recognizer.SetWords(True)
         parts = []
         for offset in range(0, len(mono), 8000):
@@ -60,12 +63,40 @@ class MandarinRecognizer:
                 'confidence': min(scores, default=0)}
 
 
+class LocalAsr:
+    """RemoteDialogue ASR adapter over the on-board open-vocabulary Vosk model.
+
+    The model is loaded on the first utterance so daemon start-up never waits for
+    it, and a missing model degrades to an empty transcript instead of blocking
+    the dialogue worker.
+    """
+
+    def __init__(self, model_path, dependencies=None, recognizer_factory=None):
+        self.model_path = model_path
+        self.dependencies = dependencies
+        self._factory = recognizer_factory or (
+            lambda: MandarinRecognizer(model_path, dependencies, grammar=False))
+        self._recognizer = None
+        self._lock = threading.Lock()
+
+    def _load(self):
+        with self._lock:
+            if self._recognizer is None:
+                self._recognizer = self._factory()
+            return self._recognizer
+
+    def transcribe(self, phrase, cancelled=lambda: False, timeout=20):
+        return self._load().recognize(phrase).get('text', '')
+
+
 class VoiceControl:
     def __init__(self, recognizer_factory, executor, fallback, execute_commands=True,
-                 cue=None, ttl=6, clock=time.monotonic, recognize_speech=True,guard=updates_allowed):
+                 cue=None, ttl=6, clock=time.monotonic, recognize_speech=True,guard=updates_allowed,
+                 dialogue=None):
         self.factory, self.executor, self.fallback = recognizer_factory, executor, fallback
         self.execute_commands, self.cue = execute_commands, cue
         self.recognize_speech = recognize_speech
+        self.dialogue = dialogue
         self.guard=guard
         self._recognizer = None
         self.ttl, self.clock = ttl, clock
@@ -97,6 +128,8 @@ class VoiceControl:
         with self.condition:
             self.generation += 1
             self.queue.clear()
+            if self.dialogue is not None:
+                self.dialogue.reset()
 
     def valid(self, job):
         with self.condition:
@@ -111,15 +144,31 @@ class VoiceControl:
             if self.valid(job):
                 self.fallback(job[2])
 
+    def _respond(self, job):
+        if self.dialogue is None:
+            self._echo(job)
+            return None
+        return self.dialogue.handle(job[2], allowed=lambda: self.valid(job))
+
     def _run(self):
         try:
-            recognizer = self.factory()
-            self._recognizer = recognizer
-            LOG.info('local Chinese speech recognition ready; mode=%s',
-                     'actions' if self.execute_commands else 'shadow')
+            if self.dialogue is not None:
+                # Dialogue mode must confirm sit/stand through the remote intent
+                # gateway, so the on-board command grammar never runs here.
+                recognizer = None
+                LOG.info('remote dialogue owns recognition; local command grammar disabled')
+            else:
+                recognizer = self.factory()
+                self._recognizer = recognizer
+                LOG.info('local Chinese speech recognition ready; mode=%s',
+                         'actions' if self.execute_commands else 'shadow')
         except Exception:
             recognizer = None
-            LOG.exception('speech model unavailable; ordinary echo remains available')
+            if self.dialogue is not None:
+                # Remote dialogue owns recognition; a missing local model is expected.
+                LOG.info('local speech model unavailable; remote dialogue handles speech')
+            else:
+                LOG.exception('speech model unavailable; ordinary echo remains available')
         finally:
             self.ready.set()
         while True:
@@ -133,7 +182,9 @@ class VoiceControl:
                 if not self.valid(job):
                     continue
                 if recognizer is None or not self.recognize_speech:
-                    self._echo(job)
+                    outcome = self._respond(job)
+                    if outcome is not None:
+                        self.last_result = {'command': None, 'dialogue': outcome}
                     continue
                 result = recognizer.recognize(job[2])
                 command = parse_command(result.get('text', ''), result.get('confidence', 0))
@@ -142,8 +193,10 @@ class VoiceControl:
                 # Do not retain arbitrary conversation transcriptions in logs.
                 LOG.info('speech command=%s confidence=%.2f', command or 'none', result.get('confidence', 0))
                 if command is None or not self.execute_commands:
-                    self._echo(job)
+                    outcome = self._respond(job)
                     self.last_result = {'command': command, 'shadow': not self.execute_commands}
+                    if outcome is not None:
+                        self.last_result['dialogue'] = outcome
                     continue
                 outcome = self.executor.execute(command, allowed=lambda: self.valid(job))
                 self.last_result = {'command': command, **outcome}
@@ -166,5 +219,7 @@ class VoiceControl:
             self.closed = True
             self.generation += 1
             self.queue.clear()
+            if self.dialogue is not None:
+                self.dialogue.reset()
             self.condition.notify_all()
         self.thread.join(timeout=2)

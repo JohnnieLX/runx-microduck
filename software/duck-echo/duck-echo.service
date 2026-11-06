@@ -16,6 +16,10 @@ Environment=ECHO_TRIGGER_MODE=toggle
 Environment=ECHO_REPLY_MODE=duck
 Environment=OPENBLAS_NUM_THREADS=1
 Environment=OMP_NUM_THREADS=1
+# Remote dialogue reads ECHO_ASR_BASE_URL, ECHO_LLM_BASE_URL, ECHO_LLM_MODEL,
+# ECHO_LLM_API_KEY, ECHO_TTS_BASE_URL, ECHO_TTS_API_KEY and ECHO_TTS_VOICE from
+# this file; keys never belong in the repository. ASR uses the voice service's
+# Whisper /asr route by default; set ECHO_ASR_BASE_URL=local for on-board Vosk.
 EnvironmentFile=-/etc/default/duck-echo
 RuntimeDirectory=duck-echo
 RuntimeDirectoryMode=0700
@@ -30,7 +34,7 @@ NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
 PrivateTmp=true
-RestrictAddressFamilies=AF_UNIX
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
 
 [Install]
 WantedBy=multi-user.target

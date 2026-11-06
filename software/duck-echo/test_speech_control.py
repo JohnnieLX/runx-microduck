@@ -38,6 +38,7 @@ class SpeechTests(unittest.TestCase):
         self.assertEqual(len(control.queue),0)
 
     def make(self, recognizer=None, **kwargs):
+        kwargs.setdefault('guard', lambda: True)
         self.echoed = []
         self.executor = FakeExecutor()
         self.control = speech.VoiceControl(
@@ -105,7 +106,7 @@ class SpeechTests(unittest.TestCase):
         self.echoed = []
         self.executor = FakeExecutor()
         with self.assertLogs('duck-echo', level='ERROR'):
-            control = speech.VoiceControl(failure, self.executor, self.echoed.append)
+            control = speech.VoiceControl(failure, self.executor, self.echoed.append, guard=lambda: True)
             self.addCleanup(control.close)
             self.assertTrue(control.ready.wait(1))
         control.submit(b'pcm')
@@ -118,6 +119,86 @@ class SpeechTests(unittest.TestCase):
         self.assertTrue(control.idle.wait(1))
         self.assertEqual(self.executor.commands, [])
         self.assertEqual(self.echoed, [b'pcm'])
+
+
+class FakeDialogue:
+    def __init__(self):
+        self.handled = []
+        self.reset_count = 0
+
+    def handle(self, pcm, allowed):
+        self.handled.append((pcm, allowed()))
+        return {'ok': True, 'reply_chars': 4}
+
+    def reset(self):
+        self.reset_count += 1
+
+
+class RemoteDialogueRoutingTests(unittest.TestCase):
+    def test_remote_dialogue_receives_original_pcm_without_loading_vosk(self):
+        dialogue = FakeDialogue()
+        def forbidden_factory():
+            raise AssertionError('Vosk must not load in off + dialogue mode')
+        voice = speech.VoiceControl(
+            forbidden_factory, FakeExecutor(), lambda pcm: None, execute_commands=False,
+            recognize_speech=False, dialogue=dialogue, guard=lambda: True)
+        self.addCleanup(voice.close)
+        self.assertTrue(voice.ready.wait(1))
+        self.assertIsNone(voice.recognizer)
+        voice.submit(b'pcm')
+        self.assertTrue(voice.idle.wait(1))
+        self.assertEqual(dialogue.handled, [(b'pcm', True)])
+        self.assertEqual(voice.last_result['dialogue']['ok'], True)
+
+    def test_remote_dialogue_precedes_local_exact_command(self):
+        dialogue, executor = FakeDialogue(), FakeExecutor()
+        def forbidden_factory():
+            raise AssertionError('dialogue mode must not run the on-board grammar')
+        voice = speech.VoiceControl(
+            forbidden_factory, executor, lambda pcm: None, execute_commands=True,
+            dialogue=dialogue, guard=lambda: True)
+        self.addCleanup(voice.close)
+        voice.submit(b'command')
+        self.assertTrue(voice.idle.wait(1))
+        self.assertEqual(executor.commands, [])
+        self.assertEqual(dialogue.handled, [(b'command', True)])
+
+    def test_non_command_uses_dialogue_instead_of_echo(self):
+        dialogue, echoed = FakeDialogue(), []
+        voice = speech.VoiceControl(
+            FakeRecognizer, FakeExecutor(), echoed.append, execute_commands=False, dialogue=dialogue, guard=lambda: True)
+        self.addCleanup(voice.close)
+        voice.submit(b'chat')
+        self.assertTrue(voice.idle.wait(1))
+        self.assertEqual(dialogue.handled, [(b'chat', True)])
+        self.assertEqual(echoed, [])
+
+    def test_cancel_resets_remote_transaction_and_history(self):
+        dialogue = FakeDialogue()
+        voice = speech.VoiceControl(
+            FakeRecognizer, FakeExecutor(), lambda pcm: None, dialogue=dialogue, guard=lambda: True)
+        self.addCleanup(voice.close)
+        voice.cancel()
+        self.assertEqual(dialogue.reset_count, 1)
+
+
+class LocalAsrTests(unittest.TestCase):
+    def test_model_is_loaded_once_and_transcript_is_returned(self):
+        loads = []
+        recognizer = FakeRecognizer('你好鸭')
+
+        def factory():
+            loads.append(recognizer)
+            return recognizer
+
+        asr = speech.LocalAsr('/models/vosk', recognizer_factory=factory)
+        self.assertEqual(asr.transcribe(b'\0' * 4), '你好鸭')
+        self.assertEqual(asr.transcribe(b'\0' * 4), '你好鸭')
+        self.assertEqual(loads, [recognizer])
+
+    def test_missing_text_becomes_an_empty_transcript(self):
+        asr = speech.LocalAsr('m', recognizer_factory=lambda: FakeRecognizer(''))
+        self.assertEqual(asr.transcribe(b'\0' * 4), '')
 
 
 if __name__ == '__main__':

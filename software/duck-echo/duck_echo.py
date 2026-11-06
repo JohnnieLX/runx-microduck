@@ -18,6 +18,7 @@ import sys
 import tempfile
 import threading
 import time
+from types import SimpleNamespace
 import wave
 
 LOG = logging.getLogger('duck-echo')
@@ -127,6 +128,56 @@ def terminate(process):
             process.wait(timeout=1)
 
 
+DIALOGUE_DEFAULTS = {
+    'asr_base_url': 'https://voice.mrunx.com',
+    'llm_base_url': 'https://ollama.mrunx.com/v1',
+    'llm_model': 'qwen3-vl:4b-instruct',
+    'tts_base_url': 'https://voice.mrunx.com',
+}
+
+
+def dialogue_adapters(args, environ=os.environ):
+    """Assemble the remote ASR, LLM, and TTS providers for spoken dialogue.
+
+    ASR posts the phrase to the voice service's Whisper /asr route; setting
+    ECHO_ASR_BASE_URL=local keeps the previous on-board Vosk recognizer as an
+    offline fallback. Keys stay out of the source tree: ECHO_LLM_API_KEY and
+    ECHO_TTS_API_KEY are read from /etc/default/duck-echo, and the ASR/TTS keys
+    fall back to the shared platform key when not set separately.
+    """
+    key = environ.get('ECHO_LLM_API_KEY', '').strip()
+    if not key:
+        raise RuntimeError(
+            'remote ASR/LLM/TTS provider API contracts are not configured; '
+            'set ECHO_LLM_API_KEY in /etc/default/duck-echo')
+    from remote_models import HttpAsr, HttpTts, OpenAIChatLlm
+    asr_url = (environ.get('ECHO_ASR_BASE_URL') or DIALOGUE_DEFAULTS['asr_base_url']).strip()
+    if asr_url.lower() == 'local':
+        from speech_control import LocalAsr
+        asr = LocalAsr(getattr(args, 'voice_model', '/opt/duck-echo/models/vosk-model-small-cn-0.22'),
+                       getattr(args, 'speech_deps', '/opt/duck-echo/asr-deps'))
+    else:
+        asr = HttpAsr(asr_url, environ.get('ECHO_ASR_API_KEY') or key)
+    return SimpleNamespace(
+        asr=asr,
+        llm=OpenAIChatLlm(environ.get('ECHO_LLM_BASE_URL') or DIALOGUE_DEFAULTS['llm_base_url'],
+                          environ.get('ECHO_LLM_MODEL') or DIALOGUE_DEFAULTS['llm_model'], key),
+        tts=HttpTts(environ.get('ECHO_TTS_BASE_URL') or DIALOGUE_DEFAULTS['tts_base_url'],
+                    environ.get('ECHO_TTS_API_KEY') or key,
+                    voice=environ.get('ECHO_TTS_VOICE') or None),
+    )
+
+
+def build_remote_dialogue(args, play_reply, adapters=None, intent_gateway=None):
+    if args.reply_mode != 'dialogue':
+        return None
+    if adapters is None:
+        adapters = dialogue_adapters(args)
+    from remote_dialogue import RemoteDialogue
+    return RemoteDialogue(adapters.asr, adapters.llm, adapters.tts, play_reply,
+                          intent_gateway=intent_gateway)
+
+
 class AlsaAudio:
     def __init__(self, capture_device, playback_device, channel=1, pitch=1.25, maximum=10):
         self.capture_device = capture_device
@@ -225,16 +276,17 @@ class AlsaAudio:
         with self.playback_lock:
             self._play(data, allowed)
 
-    def _play(self, data, allowed=None):
+    def _play(self, data, allowed=None, pitch=None):
         self.stop_playback()
         if allowed is not None and not allowed():
             return
+        pitch = self.pitch if pitch is None else pitch
         self.playback_ok = None
         errors = tempfile.TemporaryFile()
         try:
             process = subprocess.Popen([
                 'aplay', '-q', '-D', self.playback_device, '-t', 'raw', '-f', 'S16_LE',
-                '-c', '2', '-r', str(round(RATE * self.pitch)),
+                '-c', '2', '-r', str(round(RATE * pitch)),
             ], stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=errors)
         except BaseException:
             errors.close()
@@ -247,13 +299,13 @@ class AlsaAudio:
                     terminate(process)
                     process.communicate(timeout=1)
                     return
-                process.communicate(input=data, timeout=self.maximum / self.pitch + 4)
+                process.communicate(input=data, timeout=self.maximum / pitch + 4)
                 self.playback_ok = process.returncode == 0
                 if process.returncode not in (0, -signal.SIGTERM):
                     errors.seek(0)
                     LOG.error('playback failed: %s', errors.read().decode(errors='replace').strip())
                 elif process.returncode == 0:
-                    LOG.info('repeat playback completed (pitch/speed %.2fx)', self.pitch)
+                    LOG.info('playback completed (pitch/speed %.2fx)', pitch)
             except subprocess.TimeoutExpired:
                 self.playback_ok = False
                 terminate(process)
@@ -268,6 +320,11 @@ class AlsaAudio:
 
         self.player_thread = threading.Thread(target=write, daemon=True)
         self.player_thread.start()
+
+    def play_reply(self, data, allowed=None):
+        """Play normalized remote speech without duck voice effects."""
+        with self.playback_lock:
+            self._play(data, allowed, pitch=1.0)
 
     def stop_playback(self):
         with self.playback_lock:
@@ -455,8 +512,8 @@ def main(argv=None):
     parser.add_argument('--input', help='optional fixed /dev/input/eventN')
     parser.add_argument('--trigger-mode', choices=['toggle', 'hold'], default='toggle')
     parser.add_argument('--voice-mode', choices=['off', 'shadow', 'actions'], default='off')
-    parser.add_argument('--reply-mode', choices=['duck', 'echo'], default='duck',
-                        help='daemon ordinary speech: native duck interaction or explicit PCM replay')
+    parser.add_argument('--reply-mode', choices=['duck', 'echo', 'dialogue'], default='duck',
+                        help='daemon ordinary speech: native duck interaction, PCM replay, or remote dialogue')
     parser.add_argument('--voice-model', default='/opt/duck-echo/models/vosk-model-small-cn-0.22')
     parser.add_argument('--speech-deps', default='/opt/duck-echo/asr-deps')
     parser.add_argument('--control-socket', default='/run/duck-echo/control.sock')
@@ -479,10 +536,25 @@ def main(argv=None):
     if toggle_daemon:
         from continuous_audio import ContinuousAudio
         audio = ContinuousAudio(audio)
-    if args.action == 'daemon' and (args.voice_mode != 'off' or toggle_daemon or args.reply_mode == 'duck'):
-        from speech_control import MandarinRecognizer, VoiceControl
+    voice_enabled = args.action == 'daemon' and (
+        args.voice_mode != 'off' or toggle_daemon or args.reply_mode in ('duck', 'dialogue'))
+    robot = posture = None
+    if voice_enabled:
         from voice_commands import PostureCommands, RobotClient
         robot = RobotClient()
+        posture = PostureCommands(robot)
+    gateway = None
+    if args.action == 'daemon' and args.reply_mode == 'dialogue' and args.voice_mode == 'actions':
+        from intent_gateway import IntentGateway
+        gateway = IntentGateway(posture)
+    try:
+        dialogue = build_remote_dialogue(args, audio.play_reply, intent_gateway=gateway)
+    except RuntimeError as error:
+        LOG.error('remote dialogue configuration unavailable: %s', error)
+        audio.close()
+        return 2
+    if voice_enabled:
+        from speech_control import MandarinRecognizer, VoiceControl
         sound_lengths = native_sound_durations()
         def cue(accepted):
             robot.call('robot.sound', {'tag': 'chirp' if accepted else 'inquire'})
@@ -492,9 +564,9 @@ def main(argv=None):
                 raw_cue, accepted, duration=sound_lengths['chirp' if accepted else 'inquire']+.1)
         audio.voice = VoiceControl(
             lambda: MandarinRecognizer(args.voice_model, args.speech_deps),
-            PostureCommands(robot), audio.play if args.reply_mode == 'echo' else lambda pcm: None,
+            posture, audio.play if args.reply_mode == 'echo' else lambda pcm: None,
             execute_commands=args.voice_mode == 'actions', cue=cue,
-            recognize_speech=args.voice_mode != 'off')
+            recognize_speech=args.voice_mode != 'off', dialogue=dialogue)
     control_server = None
     try:
         if toggle_daemon:
@@ -538,6 +610,9 @@ def main(argv=None):
             audio.music.close()
         if audio.voice is not None:
             audio.voice.close()
+        close_dialogue = getattr(dialogue, 'close', None)
+        if close_dialogue is not None:
+            close_dialogue()
 
 
 if __name__ == '__main__':

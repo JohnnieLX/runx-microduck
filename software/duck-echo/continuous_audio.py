@@ -321,6 +321,19 @@ class ContinuousAudio:
                 self.pending = ('play', self.generation, data)
                 self.condition.notify_all()
 
+    def play_reply(self, data, allowed=None):
+        """Enqueue natural reply audio without cancelling its source dialogue."""
+        if not self.guard():
+            return
+        if allowed is not None and not allowed():
+            return
+        with self.condition:
+            if self.active and not self.closed:
+                self.output_pending = True
+                self.segmenter.reset()
+                self.pending = ('play_reply', self.generation, data, allowed)
+                self.condition.notify_all()
+
     def command_cue(self, callback, accepted, duration=1, allowed=None):
         if not self.guard():return
         with self.condition:
@@ -390,7 +403,7 @@ class ContinuousAudio:
                 continue
             if job is None:
                 continue
-            kind, generation, data = job
+            kind, generation, data, *options = job
             if kind == 'phrase' and self.voice is not None:
                 with self.dispatch_lock:
                     with self.condition:
@@ -405,9 +418,15 @@ class ContinuousAudio:
                     self.output_pending = True
                     self.segmenter.reset()
             if valid:
+                external_allowed = options[0] if options else None
+                allowed = lambda generation=generation, mode=mode_generation: (
+                    self._valid(generation, mode) and
+                    (external_allowed is None or external_allowed()))
                 try:
-                    self.backend.play(data, allowed=lambda generation=generation, mode=mode_generation:
-                                      self._valid(generation, mode))
+                    if kind == 'play_reply':
+                        self.backend.play_reply(data, allowed=allowed)
+                    else:
+                        self.backend.play(data, allowed=allowed)
                 except Exception:
                     LOG.exception('continuous playback failed')
                 finally:
