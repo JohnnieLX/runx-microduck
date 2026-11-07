@@ -10,6 +10,10 @@
 
 ### Changed
 
+- **README 归位**：根 `README.md` / `README.en.md` 改为本仓自己的项目说明（是什么、`our-fork`
+  做了什么、从哪里开始），不再整篇沿用上游；上游原始 README 存档为
+  `README-upstream.md` / `README-upstream.en.md` 并在首页引用。本文件回到纯变更记录，
+  不再兼任分支介绍。`docs/` 内指向原 README 章节的链接同步改指存档文件。
 - **文档许可放宽**：本项目原创文档由 CC BY-NC-SA 4.0 改为 **CC BY 4.0**，
   允许商业使用、改写与再分发，只需署名。上游模型及其派生几何不受影响，
   仍为 CC BY-NC-SA 4.0。LICENSE 相应从“双许可”改为按内容类型分三条声明（本次提交）。

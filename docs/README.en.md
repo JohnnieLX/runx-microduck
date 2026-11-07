@@ -11,7 +11,7 @@ Find resources by task. Start with first use and assembly; detailed investigatio
 | [First-use guide](上手指南/README.md) | Flashing, Wi-Fi setup, calibration, gamepad setup and the PDF guide |
 | [CAD and print files](https://github.com/fanhao375/microduck-replica-cad) | Separate Feetech HD-1910 and XL330 models and print projects |
 | [BOM shopping list](../BOM/README.md) | Online preview and Excel download for the 2026-10-23 Feetech list |
-| [Assembly videos](../README.en.md#-assembly-videos) | Bilibili episodes grouped by subassembly |
+| [Assembly videos](../README-upstream.en.md#-assembly-videos) | Bilibili episodes grouped by subassembly |
 
 ## Software and training
 

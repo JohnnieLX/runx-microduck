@@ -1,116 +1,46 @@
-# Microduck 复刻
+# Runx Microduck（润象 Microduck 复刻）
 
 **简体中文** · [English](README.en.md)
 
-> **润象科技维护分支 · [mrunx.com](https://mrunx.com)**
+润象科技（Runx Technology）维护的 Microduck 四足机器鸭仓库，fork 自
+[fanhao375/microduck-replica](https://github.com/fanhao375/microduck-replica)。
+复刻本体沿用上游，本仓在 `our-fork` 分支上维护自己的迭代：语音对话、语音动作执行、
+Studio 网页电源控制、升级链路可靠性修复等，逐条记录见 [CHANGELOG.md](CHANGELOG.md)。
+
+> **原始项目 README**：[README-upstream.md](README-upstream.md)（存档上游原文，随上游 `master` 同步）·
+> [上游 GitHub 原文](https://github.com/fanhao375/microduck-replica/blob/master/README.md)。
 >
-> 本仓库 fork 自 [fanhao375/microduck-replica](https://github.com/fanhao375/microduck-replica)，默认分支 `our-fork` 维护润象的自主迭代补丁，改动清单见 [CHANGELOG.md](CHANGELOG.md)。
-> 许可证边界：代码 [Apache-2.0](LICENSE)，本项目原创文档 [CC BY 4.0](LICENSE)，上游 3D 模型与影像 [CC BY-NC-SA 4.0](LICENSE)，详见 [NOTICE.md](NOTICE.md)。
-> 本仓库与上游项目均与 Pollen Robotics 无隶属关系，未获其背书。
-> 本 README 基于上游文档（CC BY 4.0）改写：保留教程、BOM 与实测记录，移除上游作者的个人运营入口（微信群、打赏码、逐版发版日志）；镜像与软件包仍在上游发布页发布。
+> 采购、打印、装配、标定、镜像烧录这些复刻教程都在原始 README 和下面的[资料导航](#资料导航)里；
+> 本文件只回答三件事：这个仓库是什么、跟上游有什么不同、从哪里开始。
 
-基于 [Pollen Robotics Microduck](https://pollen-robotics.com/microduck/) 的第三方整机复刻项目，提供从采购、打印、装配到标定、控制和训练的资料。
+<p align="center"><a href="software/studio/README.md"><img src="assets/studio-overview-20261025-demo.jpg" alt="Microduck Studio 网页中控界面，设备读数为模拟数据" width="920"></a><br><sub>Studio 网页中控，设备读数为模拟数据</sub></p>
 
-**飞特 HD-1910 版本已完成整机实机验证：站立、行走、前滚翻后起身均已跑通。** 主线使用 **15 颗飞特 HD-1910 舵机**，提供可烧录的**复刻镜像**和 **Microduck Studio 网页中控**，通过手机或电脑浏览器完成配网、标定和遥控。
+## 这是什么
 
-**首次上手流程已在实机跑通：** 烧录镜像 → 热点配网 → 舵机与 IMU 标定 → 配手柄、测试急停 → 站立行走。[查看实机验证记录](docs/历史更新.md#最近更新)
+一套可整机复刻的桌面四足机器鸭，硬件基线为 **15 颗飞特 HD-1910 舵机 + Radxa ZERO 3W + RPI Robot HAT**，
+上游已完成站立、行走、前滚翻后起身的实机验证。
 
-## 鸭子现在的样子
+本仓包含：
 
-**2026-10-24 · 实机运动验证通过**：下方两段实拍视频分别展示前滚翻后起身和桌面行走。
-
-<table>
-<tr>
-<th align="center">前滚翻与起身</th>
-<th align="center">桌面行走</th>
-</tr>
-<tr>
-<td align="center" valign="middle"><a href="assets/demos/2026-10-24-roll-and-rise.mp4"><img src="assets/demos/2026-10-24-roll-and-rise.gif" alt="实机完成前滚翻后重新站起" width="260"></a></td>
-<td align="center" valign="middle"><a href="assets/demos/2026-10-24-walking.mp4"><img src="assets/demos/2026-10-24-walking.gif" alt="飞特版鸭子在桌面上迈步行走" width="400"></a></td>
-</tr>
-<tr>
-<td align="center"><a href="assets/demos/2026-10-24-roll-and-rise.mp4">完整 MP4 · 约 8 秒</a></td>
-<td align="center"><a href="assets/demos/2026-10-24-walking.mp4">完整 MP4 · 约 6 秒</a></td>
-</tr>
-</table>
-
-动图为无声预览，MP4 保留完整画面和声音。
-
-**[镜像与软件包 · 上游发布页](https://github.com/fanhao375/microduck-replica/releases/latest)** · **[首次使用指南（PDF / 网页）](docs/上手指南/README.md)** · **[CAD 与打印件](https://github.com/fanhao375/microduck-replica-cad)** · **[装配教程](#-装配视频教程)** · **[BOM 采购清单](BOM/README.md)** · **[硬件工程](hardware/README.md)**
-
----
-
-### 适用版本
-
-- **飞特 HD-1910 + Radxa Zero 3W**：使用本仓复刻镜像和 Studio 网页中控。
-- **Dynamixel XL330**：提供对应 CAD 与装配资料，需使用匹配的运行软件。
-
-[选择打印件与采购清单](#打印件与采购清单) · [查看舵机详细对比](docs/执行器选型.md)
-
----
-
-## 反馈与上游
-
-本仓是润象科技的维护分支：问题、补丁和实机记录请提交到[本仓 issue](https://github.com/JohnnieLX/runx-microduck/issues)。
-
-上游项目的微信群、讨论区与逐版发布由作者在 [fanhao375/microduck-replica](https://github.com/fanhao375/microduck-replica) 维护，需要社区交流请到上游仓库。
-
----
-
-## 📺 装配视频教程
-
-**[B 站合集《MicroDuck 从零安装教程》](https://space.bilibili.com/312747174/lists/9279084?type=season)** —— CAD 图纸和装配 BOM 的作者 **机械行者Robo** 录的，从零件清单讲起，一集装一个部件。共 8 集，截至 2026-10-12 已更新 6 集：
-
-分集目录右侧是作者账号，依次为 **B 站、小红书、抖音**，可扫码或点击图片进入。
-
-<table>
-<thead>
-<tr><th>集</th><th>内容</th><th nowrap>时长</th><th>B 站</th><th>小红书</th><th>抖音</th></tr>
-</thead>
-<tbody>
-<tr>
-<td nowrap><a href="https://www.bilibili.com/video/BV1RoHX68EFV/">第 1 集</a></td><td width="260"><a href="https://www.bilibili.com/video/BV1RoHX68EFV/">零件与配件清单</a></td><td nowrap>1:32</td>
-<td rowspan="6" align="center" valign="middle" width="210"><a href="https://space.bilibili.com/312747174"><img src="assets/social/bilibili-qr.jpg" alt="B 站：机械行者Robo" width="200"></a><br><sub><b>机械行者Robo</b><br>UID 312747174</sub></td>
-<td rowspan="6" align="center" valign="middle" width="210"><a href="https://www.xiaohongshu.com/user/profile/5ad950114eacab046016f038"><img src="assets/social/xiaohongshu-qr.jpg" alt="小红书：机械行者" width="200"></a><br><sub><b>机械行者</b><br>小红书号 270594280</sub></td>
-<td rowspan="6" align="center" valign="middle" width="210"><a href="https://www.douyin.com/user/MS4wLjABAAAArLa_6yE3GE-AoRURoQnIHdbbI7yM-GHhzlgLZ-XbeYE"><img src="assets/social/douyin-qr.jpg" alt="抖音：机械行者Robo" width="200"></a><br><sub><b>机械行者Robo</b><br>抖音号 1852366168</sub></td>
-</tr>
-<tr><td nowrap><a href="https://www.bilibili.com/video/BV1Xppb6tECr/">第 2 集</a></td><td><a href="https://www.bilibili.com/video/BV1Xppb6tECr/">小腿安装</a></td><td nowrap>2:21</td></tr>
-<tr><td nowrap><a href="https://www.bilibili.com/video/BV1ycpb6yEwB/">第 3 集</a></td><td><a href="https://www.bilibili.com/video/BV1ycpb6yEwB/">大腿安装</a></td><td nowrap>5:13</td></tr>
-<tr><td nowrap><a href="https://www.bilibili.com/video/BV1Kwpg6wE9G/">第 4 集</a></td><td><a href="https://www.bilibili.com/video/BV1Kwpg6wE9G/">躯干组件安装</a></td><td nowrap>2:29</td></tr>
-<tr><td nowrap><a href="https://www.bilibili.com/video/BV1EEpg6nEkD/">第 5 集</a></td><td><a href="https://www.bilibili.com/video/BV1EEpg6nEkD/">颈部安装</a></td><td nowrap>0:40</td></tr>
-<tr><td nowrap><a href="https://www.bilibili.com/video/BV1aKpE6hEzj/">第 6 集</a></td><td><a href="https://www.bilibili.com/video/BV1aKpE6hEzj/">头部安装</a></td><td nowrap>5:50</td></tr>
-</tbody>
-</table>
-
-### 打印件与采购清单
-
-先按舵机版本选择打印资料，再准备对应的外购件。
-
-| 资料 | 适用版本 | 入口 |
+| 部分 | 位置 | 说明 |
 |---|---|---|
-| **打印件与 CAD** | **飞特 HD-1910** | [进入飞特版专区](https://github.com/fanhao375/microduck-replica-cad#飞特-hd-1910-打印资料)：打印工程、CAD 源文件和更新说明 |
-| **打印件与 CAD** | **Dynamixel XL330** | [进入 XL330 版专区](https://github.com/fanhao375/microduck-replica-cad#dynamixel-xl330-打印资料)：对应版本的 CAD 源文件与打印说明 |
-| **装配采购清单** | **飞特 HD-1910** | **[在线预览](BOM/README.md)** · **[下载 Excel](BOM/装配BOM-机械行者Robo-2026-10-23-带采购链接.xlsx)**：机械行者Robo整理，2026-10-23 版，含数量、材料和采购链接 |
+| 复刻镜像与软件包 | `software/image/`、上游[发布页](https://github.com/fanhao375/microduck-replica/releases/latest) | 可烧录系统镜像、OTA 升级包 |
+| 网页中控 | [software/studio/](software/studio/README.md) | 配网、标定、遥控、设备状态、模型与电源管理 |
+| 语音链路 | [software/duck-echo/](software/duck-echo/README.md) | 板端采集回放，识别／应答／合成走自建服务 |
+| 升级引擎编排层 | `software/updater/` | 签名校验、原子替换、失败回滚 |
 
-两种舵机的配合件不能混用。打印文件的具体版本和更新日期在 CAD 仓库对应专区维护；这份采购清单按飞特方案整理，XL330 的舵机及配套电控需另行核对。
+不包含：`robotd`（运动控制核心）与 `updaterd`（更新引擎）为闭源二进制，本仓只提供编排与部署层；
+3D 模型、打印工程与装配说明书在独立的 [CAD 仓库](https://github.com/fanhao375/microduck-replica-cad)。
 
----
+## 本分支做了什么
 
-## 现在做到哪了
-
-截至 **2026-10-25**，**飞特版整机复刻、首次上手与实机运动链路已跑通**。下面介绍各部分成果与后续拓展项目，具体测试范围及历史过程见[更新记录](docs/历史更新.md)。
-
----
-
-## 🧭 润象分支做了什么
-
-本仓在复刻本体之上维护一套面向长期运行的自有改动，全部落在 `our-fork` 分支，逐条记录见 [CHANGELOG.md](CHANGELOG.md)。相对上游的差异集中在以下几项：
+全部改动落在 `our-fork` 分支，只做增量补丁，不改上游的运动安全逻辑：
 
 | 方向 | 内容 | 状态 |
 |---|---|---|
-| **语音对话** | 按住 R3 说话，云端完成识别 → 大模型应答 → 语音回放，中英文随口说，不受固定指令表限制 | 实机跑通 |
-| **动作直接执行** | 说“坐下／站起来”，模型解析出动作后立即执行，无需再说一次确认 | 板端验证通过 |
-| **杜绝本地抢跑** | 对话模式下关闭板载命令语法，同一句话不会被本地规则提前执行 | 已生效 |
+| **语音对话** | 按住 R3 说话，云端完成识别 → 大模型应答 → 语音回放，不受固定指令表限制 | 实机跑通 |
+| **动作直接执行** | 说“坐下／站起来”，解析出动作后立即执行，不用再说一次确认 | 板端验证通过 |
+| **杜绝本地抢跑** | 对话模式下关闭板载命令识别，同一句话不会被本地规则提前执行 | 已生效 |
 | **网页电源控制** | Studio 里直接关机／重启，root 白名单加 session、origin、CSRF 三重校验 | 已上线 |
 | **升级可靠性** | 修掉升级自锁、解压目录权限、预检过严三处问题 | 已修复 |
 | **文档许可** | 本项目原创文档放宽为 CC BY 4.0，可商用可改写，只需署名 | 已调整 |
@@ -121,138 +51,28 @@
 2. 闲聊直接回答；“小鸭子，请坐下”会直接执行动作并回一句结果；
 3. 动作被安全条件拦下时，会说明原因，可换个时机再试。
 
-语音链路在板上完成采集与回放，识别、应答和合成走自建服务，模型与地址通过 `/etc/default/duck-echo` 配置，仓库内不含任何凭证。板端装配与测试见 [`software/duck-echo/`](software/duck-echo/README.md)。
+语音链路在板上完成采集与回放，识别、应答和合成走自建服务，模型与地址通过
+`/etc/default/duck-echo` 注入，仓库内不含任何凭证。板端装配与测试见
+[software/duck-echo/](software/duck-echo/README.md)。
 
 ### 边界
 
 - 语音动作链路已用板端注入语音验证，真人整机复验仍在进行；
 - 视觉多模态（VLM 看图）代码已在分支内，但按计划暂不启用；
-- 上游的镜像、步态模型与训练工程保持原样，本分支不改运动安全逻辑。
+- 摄像头在镜像里默认是测试源，真实摄像头与 ToF 的验证范围见上游版说明。
 
----
+## 从哪里开始
 
-## 💻 软件 · 复刻镜像与 Microduck Studio
-
-**软件版本沿革（沿用上游基线）**：镜像基线为 20261027，之后的软件包依次修订到 2026.10.3101 —— 覆盖 IMU 与舵机状态分开显示、只接 IMU 的独立诊断、手柄重映射与摄像头原地放大、Qinmo 支持、嘴巴34／偏航32 图示修正。逐版说明见[历史更新](docs/历史更新.md)，可下载的镜像与软件包在上游[发布页](https://github.com/fanhao375/microduck-replica/releases)。润象自身补丁见 [CHANGELOG.md](CHANGELOG.md)。
-
-镜像沿用上游 20261023c 的主程序、步态模型与总线 ID 200 IMU 自动识别。设置页可检查、下载或上传签名软件包，安装失败可回退；R3 单击开关监听，识别“坐下／站起来”，附带中文模型，无需云端账号。已有卡先通过 SSH 安装一次升级入口，之后日常更新不用重烧。音乐头身跟拍仍待修复；自由 AI 人声对话已在本分支接入，见[上一节](#-润象分支做了什么)。
-
-<p align="center"><a href="software/studio/README.md"><img src="assets/studio-overview-20261025-demo.jpg" alt="Microduck Studio 当前界面演示，设备读数为模拟数据" width="920"></a><br><sub>Studio 界面演示，设备读数为模拟数据</sub></p>
-
-**[镜像与软件包 · 上游发布页](https://github.com/fanhao375/microduck-replica/releases/latest)** · **[首次使用指南](docs/上手指南/README.md)** · **[Studio 说明](software/studio/README.md)**
-
-镜像免费，仅供个人非商业复刻；各部分许可见发布页。摄像头默认测试源，真实摄像头和 ToF 的验证范围见本版说明。
-
----
-
-## 🔧 机械 · 一站式打印与装配
-
-**机械行者Robo持续维护飞特 HD-1910 与 Dynamixel XL330 两套资料。** 模型、打印工程和更新说明集中在 CAD 仓库，按自己的舵机版本选择。
-
-| 需要什么 | 入口 |
+| 想做的事 | 入口 |
 |---|---|
-| **一站式打印** | **[拓竹 MakerWorld（飞特版）](https://makerworld.com.cn/zh/models/2963569-microduck#profileId-3478428)** · [Bambu Studio 3MF 工程](https://github.com/fanhao375/microduck-replica-cad#打印) |
-| **模型与打印资料** | **[飞特 HD-1910 专区](https://github.com/fanhao375/microduck-replica-cad#飞特-hd-1910-打印资料)** · **[XL330 专区](https://github.com/fanhao375/microduck-replica-cad#dynamixel-xl330-打印资料)** |
-| **装配教程** | **[装配说明书 PDF](https://github.com/fanhao375/microduck-replica-cad/blob/master/安装说明书/microduck装配安装说明书.pdf)** · **[分集视频](#-装配视频教程)**；两版按对应结构件装配 |
-| **采购清单** | **[BOM 在线预览](BOM/README.md)** · **[下载 Excel](BOM/装配BOM-机械行者Robo-2026-10-23-带采购链接.xlsx)**：2026-10-23 飞特版，XL330 的舵机及配套电控需另行核对 |
+| 第一次上手：烧镜像 → 配网 → 标定 → 遥控 | [首次使用指南](docs/上手指南/README.md)、[上游原始 README](README-upstream.md) |
+| 先看鸭子能跑成什么样 | 上游 README 的[实机演示](README-upstream.md#鸭子现在的样子) |
+| 打印与装配 | [CAD 仓库](https://github.com/fanhao375/microduck-replica-cad)、[BOM 采购清单](BOM/README.md)、上游 README 的[装配视频教程](README-upstream.md#-装配视频教程) |
+| 改软件、看接口 | [software/studio/](software/studio/README.md)、[software/duck-echo/](software/duck-echo/README.md) |
+| 想知道踩过哪些坑 | [踩坑记录](踩坑记录.md)、[调试记录](调试记录.md)、[构建日志](构建日志.md) |
 
-[CAD 仓库与最新发布](https://github.com/fanhao375/microduck-replica-cad/releases) · [构建记录](构建日志.md)
-
----
-
-## 🔌 电气 · 五块电路板
-
-本仓提供总线 IMU 板、舵机总线 HUB 和电池接口板的工程资料；主控采用瑞莎 **Radxa ZERO 3W**，扩展板使用 Pollen Robotics 官方开源的 **RPI Robot HAT**。
-
-<table>
-<tr>
-<th>总线 IMU 板</th>
-<th>舵机总线 HUB</th>
-<th>电池接口板</th>
-<th>瑞莎主控<br>Radxa ZERO 3W</th>
-<th>官方 HAT<br>RPI Robot HAT</th>
-</tr>
-<tr>
-<td align="center" valign="middle" width="170"><a href="assets/hw/imu-to-dxl-1v0a-3d.png"><img src="assets/hw/imu-to-dxl-1v0a-3d.png" alt="总线 IMU 板 3D 设计预览" width="160"></a></td>
-<td align="center" valign="middle" width="170"><a href="assets/hw/wire-hub-1v0a-3d.png"><img src="assets/hw/wire-hub-1v0a-3d.png" alt="舵机总线 HUB 3D 设计预览" width="160"></a></td>
-<td align="center" valign="middle" width="170"><a href="assets/hw/pogo-pin-1v0a-3d.png"><img src="assets/hw/pogo-pin-1v0a-3d.png" alt="电池接口板 3D 设计预览" width="160"></a></td>
-<td align="center" valign="middle" width="170"><a href="assets/hw/radxa-zero3w-official.webp"><img src="assets/hw/radxa-zero3w-official.webp" alt="瑞莎官方 ZERO 3W 板卡图" width="160"></a></td>
-<td align="center" valign="middle" width="170"><a href="assets/hw/rpi-robot-hat-official.png"><img src="assets/hw/rpi-robot-hat-official.png" alt="Pollen Robotics 官方 RPI Robot HAT 设计图" width="160"></a></td>
-</tr>
-<tr>
-<td align="center" valign="top"><a href="assets/hw/imu-to-dxl-1v0a-pcb.png">PCB 预览</a><br><a href="hardware/新版/imu_to_dxl_1V0A/">工程文件</a></td>
-<td align="center" valign="top"><a href="assets/hw/wire-hub-1v0a-pcb.png">PCB 预览</a><br><a href="hardware/新版/wire_hub_1V0A/">工程文件</a></td>
-<td align="center" valign="top"><a href="assets/hw/pogo-pin-1v0a-pcb.png">PCB 预览</a><br><a href="hardware/新版/POGO_PIN_1V0A/">工程文件</a></td>
-<td align="center" valign="top"><a href="https://item.taobao.com/item.htm?id=763812025816">购买（淘宝）</a><br><a href="https://docs.radxa.com/en/zero/zero3">官方资料</a> · <a href="https://docs.radxa.com/en/zero/zero3/download#hardware-design">设计文件</a></td>
-<td align="center" valign="top"><a href="https://github.com/pollen-robotics/elec_RPI_Robot_HAT">KiCad 工程</a><br><a href="https://github.com/pollen-robotics/elec_RPI_Robot_HAT/tree/main/production">生产打样文件</a></td>
-</tr>
-</table>
-
-前三张为自制板的 3D 设计预览，后两张瑞莎与 HAT 配图来自官方资料。点击图片可查看原图，[图片来源](assets/hw/official-board-images.md)。瑞莎设计资料含原理图、2D 尺寸与 3D 模型；三块自制板的嘉立创 EDA 工程、STEP 和实测进度见各工程说明。
-
-[全部硬件工程](hardware/README.md) · [三块板的说明](hardware/新版/README.md) · [总线 IMU 固件](hardware/imu_to_dxl/README.md)
-
----
-
-## 🧠 算法 · 飞特官方 BAM
-
-[**飞特官方 HD-1910 BAM**](https://gitee.com/ftservo/ftservo-bam) 提供舵机动力学模型与辨识参数，供仿真训练参考。本仓提供开源[训练工程](software/training/README.md)与[网页训练工作台](software/training-studio/README.md)，具体模型配置与参数来源见[参数说明](docs/HD-1910-M6参数来源.md)。
-
----
-
-## 🖥️ 开源训练平台 · Microduck Training Studio
-
-本仓收录 **Microduck Training Studio**（上游作者的训练工作台）：在电脑上通过网页创建训练实验、查看曲线、暂停与继续、评估检查点并导出 ONNX 模型。训练工作台与鸭子上的 Studio 是两个独立服务。
-
-<p align="center"><a href="software/training-studio/README.md"><img src="assets/training-studio-20261025-demo.jpg" alt="Microduck Training Studio 实际界面：三维模型、训练控制与合成演示曲线" width="920"></a><br><sub>训练平台演示界面：3D 为模型预览，曲线为合成演示数据</sub></p>
-
-已完成真实 GPU 短试跑、评估回放和模型导出的链路验证；长训练与自训策略的真机验证仍待完成。
-
-**[训练平台与使用说明](software/training-studio/README.md)** · **[动作实验室指南](software/training-studio/web/custom-actions.md)** · **[训练工程](software/training/README.md)** · [验证记录](software/training-studio/docs/verification.md)
-
----
-
-## 🧰 工具 · 烧卡、调试与资料
-
-常用软件和开发工具集中在[工具导航](tools/README.md)，按要做的事选择即可。
-
-| 要做什么 | 工具与入口 |
-|---|---|
-| 烧录镜像 | **[Rufus 便携版 EXE](tools/rufus/rufus-4.15p.exe)** · [烧卡说明](tools/rufus/README.md) |
-| 串口与舵机调试 | **[飞特 FD 与串口助手](tools/飞特/README.md)** · [3D 网页调试台](tools/servo-web/README.md) |
-| 查飞特资料、接入 SDK | **[官方手册、型号规格书与 SDK](docs/飞特资料/README.md)**，标明官网版本和离线副本日期 |
-| 测舵机、分析问题 | [HD1910M 测试工具](tools/FeeTech_HD1910M_Servo/README.md) · [STS3215 测试工具](tools/sts3215Servo_testtool/README.md) · [步态分析](tools/gait-analysis/README.md) |
-
----
-
-## 🦆 鸭友贡献
-
-下列贡献合并于上游仓库 [fanhao375/microduck-replica](https://github.com/fanhao375/microduck-replica)，随 fork 一并保留；作者与 PR 链接为上游史实。
-
-| 谁 | 贡献了什么 |
-|---|---|
-| [@yoyojacky](https://github.com/yoyojacky) | **Rust 版飞特舵机测试工具**（[PR #27](https://github.com/fanhao375/microduck-replica/pull/27)，已合并）。自己实现的最小 STS/SCS 协议（帧打包、校验和、ping、读写寄存器、状态解析），命令行可以扫描总线（带进度条）、读状态、转到指定位置、单颗测试和批量测试，输出位置偏差、峰值电流、峰值负载、电压温度并判定 PASS/FAIL。台架验收一条命令出汇总表 → [`tools/sts3215Servo_testtool/`](tools/sts3215Servo_testtool/) |
-| [@Abo1ish](https://github.com/Abo1ish) | **IMU 小板固件 + 调试台姿态显示**（[PR #32](https://github.com/fanhao375/microduck-replica/pull/32)，已合并）。给官方没开源的那块 imu_to_dxl 写了 STM32G031 固件底子，在实板上验证过，带主机端测试和一份写清楚边界的 [`VALIDATION.md`](hardware/imu_to_dxl/firmware/VALIDATION.md) → [`hardware/imu_to_dxl/firmware/`](hardware/imu_to_dxl/firmware/)；再用 J-Link 把 IMU 姿态实时读出来并进了网页调试台，3D 鸭子的躯干跟着真板子转（`--imu-jlink`，没板子也能用 `--imu-demo` 先看效果）→ [`tools/servo-web/`](tools/servo-web/) |
-| 社区鸭友 | **Radxa Zero 3W V1.12J 的启动方案**。这批板子（WiFi 换成 AIC8800DS2）光换瑞莎引导还是起不来，他实测出设备树也得换成瑞莎 B1 的：**B1 引导 + B1 DTB + Armbian 6.1.115 内核 + Trixie 系统**，跑通了 → 写进了[踩坑记录](踩坑记录.md#软件)和[镜像使用说明](tools/radxa/镜像使用说明.md#6-如果你的板子不是这一批) |
-
----
-
-## 鸭友的项目
-
-有些鸭友是自己单独开仓库做的，不在这个仓库里，但跟鸭子直接相关、做得好的，放这儿推一下：
-
-| 项目 | 作者 | 做什么的 |
-|---|---|---|
-| [microduck-color-studio](https://github.com/LathamZ/microduck-color-studio)（[在线试用](https://lathamz.github.io/microduck-color-studio/)） | [@LathamZ](https://github.com/LathamZ) | **鸭子的 3D 配色工作室，打印前先在网页里把颜色定好。** 70 个零件逐件上色，选材质（PLA / 哑光 / PETG / 金属 / 碳纤 / TPU）和灯光看效果；填上自己手里有哪些耗材，它按库存推荐配色（只用已有 / 补一色 / 丙烯点缀）。还能导入自己的 3MF（比如飞特版），导出**带颜色的多盘 3MF** 和按件拆好的 STL，拓竹 P1S / A1 mini / H2D 有预设。中英文界面，手机上也能看 |
-| [MICDUCK_FTHD1901_REBUILD](https://github.com/fengj4780-sudo/MICDUCK_FTHD1901_REBUILD) | [@fengj4780-sudo](https://github.com/fengj4780-sudo) | **飞特版结构改进 + 可选 CNC 加强件。** 在上游维护的[可编辑 SolidWorks 图纸](https://github.com/fanhao375/microduck-replica-cad)基础上接着改：适配飞特舵机（他仓库里写作 HD1901，零件文件用的是 HD-1910-C001），加强了薄弱件，修了装配干涉和几个破损的模型。腿部 **5 个零件可以换成 CNC 件**让受力更合理（还在打样测试，他估算 5 件含运费约 45 元）；不做 CNC 直接打印也行，强度也比原版好。附一键打印的 3MF（拓竹 H2D、0.4 mm、5 盘）和改好的 SolidWorks 图纸 |
-| [Microduck-kissqy](https://github.com/kissqy/Microduck-kissqy) | [@kissqy](https://github.com/kissqy) | **飞特 HD1910 的训练流程与控制实现参考。** 提供训练中控、训练环境准备与任务管理说明、ONNX 模型导出，以及机器人中控、固件和演示视频；算法部分的具体训练流程推荐参考这个项目 |
-
-做了跟鸭子有关的项目（工具、教程、改装、策略……），在本仓开 issue 贴个链接即可收录。
-
-想加进来：直接开[本仓 issue](https://github.com/JohnnieLX/runx-microduck/issues) 或提 PR；属于上游项目的改动请提交到[上游仓库](https://github.com/fanhao375/microduck-replica)。
-硬件、固件、算法、文档、实测数据都算 —— **实测数据尤其欢迎**，这个仓库的规矩是结论如实记录，无论正反。
-
----
+软件版本沿革沿用上游基线：镜像基线 20261027，之后软件包修订到 2026.10.3101，
+逐版说明见[历史更新](docs/历史更新.md)，润象自身补丁见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 资料导航
 
@@ -260,20 +80,31 @@
 
 | 项目 | 仓库位置 | 说明与入口 |
 |---|---|---|
-| 使用与装配 | [CAD 仓库](https://github.com/fanhao375/microduck-replica-cad) · [BOM/](BOM/README.md) | [首次使用指南](docs/上手指南/README.md) · [采购清单](BOM/README.md) · [装配视频](#-装配视频教程) |
-| 软件与镜像 | [software/](software/README.md) | [Studio 中控](software/studio/README.md) · [镜像构建](software/image/README.md) |
+| 使用与装配 | [CAD 仓库](https://github.com/fanhao375/microduck-replica-cad) · [BOM/](BOM/README.md) | [首次使用指南](docs/上手指南/README.md) · [采购清单](BOM/README.md) · [装配视频](README-upstream.md#-装配视频教程) |
+| 软件与镜像 | [software/](software/README.md) | [Studio 中控](software/studio/README.md) · [镜像构建](software/image/README.md) · [语音链路](software/duck-echo/README.md) |
 | 训练平台与工程 | [software/training-studio/](software/training-studio/README.md)<br>[software/training/](software/training/README.md) | 网页训练工作台、仿真环境与模型导出 |
 | 电气与固件 | [hardware/](hardware/README.md) | [电路板工程](hardware/README.md) · [IMU 固件](hardware/imu_to_dxl/README.md) |
 | 调试与分析工具 | [tools/](tools/README.md) | [工具导航](tools/README.md) · 烧卡、串口调试、飞特资料和分析脚本 |
 | 文档与记录 | [docs/](docs/README.md) | [完整文档导航](docs/README.md) · [踩坑](踩坑记录.md) · [调试](调试记录.md) · [构建](构建日志.md) |
 | 历史与社区 | [docs/](docs/README.md#深入研究与归档) | [官方更新跟踪](docs/官方更新跟踪.md) · [历史更新](docs/历史更新.md) · [社区贡献](docs/社区贡献.md) |
-
----
+| 上游原文 | [README-upstream.md](README-upstream.md) | 采购、打印、装配、标定、训练与社区入口 |
 
 ## 许可与来源
 
-代码采用 Apache-2.0，本项目原创文档采用 CC BY 4.0（可商用、可改写，只需署名），上游 3D 模型与影像采用 CC BY-NC-SA 4.0（禁商用）。详见[许可与署名](NOTICE.md)及[模型使用条款](software/image/overlay/usr/share/doc/microduck/模型说明.txt)。**复刻镜像内的模型与影像不得随收费产品分发。**
+代码采用 Apache-2.0，本项目原创文档采用 CC BY 4.0（可商用、可改写，只需署名），
+上游 3D 模型与影像采用 CC BY-NC-SA 4.0（禁商用）。详见[许可与署名](NOTICE.md)及
+[模型使用条款](software/image/overlay/usr/share/doc/microduck/模型说明.txt)。
+**复刻镜像内的模型与影像不得随收费产品分发。**
 
-本项目与 Pollen Robotics 无隶属关系，未获其背书。
+本项目基于 [Pollen Robotics Microduck](https://pollen-robotics.com/microduck/) 复刻，
+与 Pollen Robotics 无隶属关系，未获其背书；复刻主体由上游作者
+[fanhao375](https://github.com/fanhao375/microduck-replica) 维护。
 
-上游作者的工作见 [fanhao375/microduck-replica](https://github.com/fanhao375/microduck-replica)；本仓只维护润象的迭代补丁，不代收任何赞助或打赏。
+## 参与与反馈
+
+本仓是润象的维护分支：本仓补丁、实机记录和问题请提到
+[本仓 issue](https://github.com/JohnnieLX/runx-microduck/issues)。
+属于复刻本体的改动请提交[上游仓库](https://github.com/fanhao375/microduck-replica)。
+
+贡献方式、许可边界与提交规范见 [CONTRIBUTING.md](CONTRIBUTING.md)，
+安全问题见 [SECURITY.md](SECURITY.md)。

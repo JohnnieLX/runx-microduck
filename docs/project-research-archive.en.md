@@ -75,7 +75,7 @@ The [early reverse-engineered parts estimate](../BOM.en.md) remains available as
 
 The old `print/` parts and `cad/` assembly STLs came from upstream simulation geometry and did not include the physical CAD changes. Those files have been removed; the directories now contain download pointers. **Do not mix the two servo versions or print simulation/web-viewer meshes from this repository.**
 
-See the respective CAD sections for file versions, changes and printing methods, and the [printing notes](../print/README.en.md) for general guidance. CAD modelling and assembly documentation are by **机械行者Robo**, with attribution and licensing in the CAD repository. The [assembly videos](../README.en.md#-assembly-videos) walk through the build.
+See the respective CAD sections for file versions, changes and printing methods, and the [printing notes](../print/README.en.md) for general guidance. CAD modelling and assembly documentation are by **机械行者Robo**, with attribution and licensing in the CAD repository. The [assembly videos](../README-upstream.en.md#-assembly-videos) walk through the build.
 
 ---
 

@@ -11,7 +11,7 @@
 | [首次使用指南](上手指南/README.md) | 烧录、配网、标定、手柄与 PDF 指南 |
 | [CAD 与打印件](https://github.com/fanhao375/microduck-replica-cad) | 飞特 HD-1910 / XL330 对应版本的模型与打印工程 |
 | [BOM 采购清单](../BOM/README.md) | 2026-10-23 飞特版在线预览与 Excel 下载 |
-| [装配视频教程](../README.md#-装配视频教程) | 按部件分集的 B 站视频 |
+| [装配视频教程](../README-upstream.md#-装配视频教程) | 按部件分集的 B 站视频 |
 
 ## 软件与训练
 
